@@ -15,28 +15,28 @@ checkNames <- function (eset) {
   
   require(Biobase)
   ## check feature names
-  check.feature <- intersect(rownames(exprs(eset)), rownames(fData(eset)))
+  check.feature <- intersect(rownames(Biobase::exprs(eset)), rownames(Biobase::fData(eset)))
   if (length(check.feature) == 0) {
     warning("Names of features do not match between expressions and annotations")
     return (NULL)
   } else {
-    if (length(check.feature) != nrow(exprs(eset)) || length(check.feature) != nrow(fData(eset))) {
+    if (length(check.feature) != nrow(Biobase::exprs(eset)) || length(check.feature) != nrow(Biobase::fData(eset))) {
       warning("Some features are missing between expressions and annotations")
     }
   }
   ## check sample names
-  check.sample <- intersect(colnames(exprs(eset)), rownames(pData(eset)))
+  check.sample <- intersect(colnames(Biobase::exprs(eset)), rownames(Biobase::pData(eset)))
   if (length(check.sample) == 0) {
     warning("Names of samples do not match between expressions and phenotypes")
     return (NULL)
   } else {
-    if (length(check.sample) != ncol(exprs(eset)) || length(check.sample) != nrow(pData(eset))) {
+    if (length(check.sample) != ncol(Biobase::exprs(eset)) || length(check.sample) != nrow(Biobase::pData(eset))) {
       warning("Some samples are missing between expressions and phenotypes")
     }
   }
-  exprs(eset) <- exprs(eset)[check.feature, check.sample, drop=FALSE]
-  fData(eset) <- fData(eset)[check.feature, , drop=FALSE]
-  pData(eset) <- pData(eset)[check.sample, , drop=FALSE]
+  Biobase::exprs(eset) <- Biobase::exprs(eset)[check.feature, check.sample, drop=FALSE]
+  Biobase::fData(eset) <- Biobase::fData(eset)[check.feature, , drop=FALSE]
+  Biobase::pData(eset) <- Biobase::pData(eset)[check.sample, , drop=FALSE]
   return (eset)
 }
 
@@ -144,7 +144,7 @@ probeGeneMapping <- function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL9
 }
 
 
-platformMerging <- function (esets){
+platformMerging <- function (esets) {
   #Open every GSE, specify in the configuration CSV, from InsilicoDB and create a list of Eset
   #structure call gselist
   #
