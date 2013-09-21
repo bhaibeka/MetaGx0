@@ -37,6 +37,7 @@ checkNames <- function (eset) {
   Biobase::exprs(eset) <- Biobase::exprs(eset)[check.feature, check.sample, drop=FALSE]
   Biobase::fData(eset) <- Biobase::fData(eset)[check.feature, , drop=FALSE]
   Biobase::pData(eset) <- Biobase::pData(eset)[check.sample, , drop=FALSE]
+  Biobase::pData(eset)[ , "samplename"] <- colnames(Biobase::pData(eset))
   return (eset)
 }
 
