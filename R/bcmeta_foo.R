@@ -425,9 +425,11 @@ duplicateFinder <- function (eset, var.genes=1000, dupl.cor=0.95, nthread=1) {
   return(duplix)
 }
 
-subtypeAssociation <- function (eset)
+subtypeAssociation <- function (eset) {
+  return(eset)
+}
 
-runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), saveres="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor-=0.975, datasets, nthread=1, verbose=TRUE) {  
+runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), saveres="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor=0.975, datasets, nthread=1, verbose=TRUE) {  
 
   badchars <- "[\xb5]|[\n]|[,]|[;]|[:]|[-]|[+]|[*]|[%]|[$]|[#]|[{]|[}]|[[]|[]]|[|]|[\\^]|[/]|[\\]|[.]|[_]|[ ]"
 

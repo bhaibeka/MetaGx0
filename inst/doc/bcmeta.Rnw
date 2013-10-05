@@ -1,0 +1,46 @@
+%\VignetteIndexEntry{bcmeta: an R package for meta-analysis of breast cancer gene expression}
+%\VignetteDepends{}
+%\VignetteSuggests{}
+%\VignetteKeywords{}
+%\VignettePackage{bcmeta}
+
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{authblk}
+
+
+\title{bcmeta: an R package for meta-analysis of breast cancer gene expression}
+\author[1,2]{Benjamin Haibe-Kains}
+\author[1]{Pierre-Olivier Bachant-Winner}
+\affil[1]{2Ontario Cancer Institute, Princess Margaret Cancer Centre, University Health Network, Toronto, Ontario, Canada}
+\affil[2]{Institut de recherches cliniques de Montr\'{e}al, Montreal, Quebec, Canada}
+
+\SweaveOpts{highlight=TRUE, tidy=TRUE, keep.space=TRUE, keep.blank.space=FALSE, keep.comment=TRUE}
+
+<<setup,echo=FALSE,results=hide,eval=TRUE>>=
+options(keep.source=TRUE)
+@
+
+\begin{document}
+
+
+\maketitle
+\tableofcontents
+
+%------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------
+
+%------------------------------------------------------------
+\section{Session Info}
+%------------------------------------------------------------ 
+
+<<sessionInfo,echo=FALSE,results=tex,eval=TRUE>>=
+toLatex(sessionInfo())
+@
+
+\bibliographystyle{plain}
+\bibliography{biblio}
+
+\end{document}
