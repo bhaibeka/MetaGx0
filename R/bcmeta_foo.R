@@ -425,17 +425,105 @@ duplicateFinder <- function (eset, var.genes=1000, dupl.cor=0.95, nthread=1) {
   return(duplix)
 }
 
-subtypeAssociation <- function (eset) {
-  return(eset)
+subtypeAssociation <- function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
+  ## assess association between gene expression and subtypes
+  #
+  # Arga:
+  #   eset: an expressionSet object
+  #   gene: vector of Entrez Gene IDs. If missing, all genes will be considered.
+  #
+  # Returns
+  #   list containing p-values and effect sizes
+  
+  if (class(eset) != "ExpressionSet") {
+    stop("Handling list of expressionSet objects is not implemented yet")
+  }
+  
+  if (missing(geneid)) {
+    gened <- as.character(Biobase::fData(eset)[ , "ENTREZID"])
+  }
+  
+  ## for a single expressionSet object
+  
+  ## extract subtypes
+  sbts <- Biobase::pData(eset)[ , "subtype"]
+  if (sum(table(sbts) > 3) < 2) {
+    warning("Not enough tumors in each subtype")
+    return(NULL)
+  }
+  sbtu <- levels(sbts)
+  if (missing(subtype.col)) {
+    subtype.col <- rainbow(length(sbtu), alpha=0.6)
+  } else {
+    if (length(subtype.col) < length(sbtu)) {
+      stop(sprintf("Not enough color for %i subtypes", length(sbtu)))
+    }  
+  }
+  
+  ## extract genes
+  gid <- intersect(geneid, as.character(Biobase::fData(eset)[ , "ENTREZID"]))
+  if (length(gid) == 0) {
+    stop("Genes not in the expressionSet object")
+  }
+  if (length(gid) < length(geneid)) {
+    warning(sprintf("%i/%i genes were present in the expressionSet object", length(gid), length(geneid)))
+  }
+  
+  splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
+  splitix <- splitix[sapply(splitix, length) > 0]
+  mcres <- parallel::mclapply(splitix, function(x, ...) {    
+    pp <- lapply(gid[x], function (gid, eset, sbts, boxp, resdir) {
+      ## gene symbol
+      gsymb <- Biobase::fData(eset)[match(gid, Biobase::fData(eset)[ , "ENTREZID"]), "SYMBOL"]
+      xx <- Biobase::exprs(eset)[paste("geneid", gid, sep="."), ]
+      ## kruskal-wallis test
+      kt <- kruskal.test(x=xx, g=sbts)$p.value
+      ## pairwise wilcoxon test
+      wt <- matrix(NA, nrow=length(sbtu), ncol=length(sbtu), dimnames=list(sbtu, sbtu))
+      wt1 <- pairwise.wilcox.test(x=xx, g=sbts, p.adjust.method="none", paired=FALSE, alternative="greater")$p.value
+      wt2 <- pairwise.wilcox.test(x=xx, g=sbts, p.adjust.method="none", paired=FALSE, alternative="less")$p.value
+      nix <- !is.na(wt1)
+      wt[rownames(wt1), colnames(wt1)][nix] <- wt1[nix]
+      nix <- !is.na(t(wt2))
+      wt[colnames(wt2), rownames(wt2)][nix] <- t(wt2)[nix]
+      diag(wt) <- 1
+      if (boxp) {
+        pdf(file.path(resdir, sprintf("subtype_association_boxplot_%s.pdf", gsymb)))
+        par(las=2, mar=c(5, 4, 4, 2) + 0.1, xaxt="n")
+        # dd <- c(list(" "=NA), list("  "=NA), dd2)
+  			mp <- boxplot(xx ~ sbts, las=3, outline=FALSE, ylim=c(-2,2), main=sprintf("%s", gsymb), col=subtype.col)
+        axis(1, at=1:length(mp$names), tick=TRUE, labels=T)
+        text(x=1:length(mp$names), y=par("usr")[3] - (par("usr")[4] * 0.05), pos=2, labels=mp$names, srt=45, xpd=NA, font=2, col=c("black"))
+        text(x=1:length(mp$names), y=par("usr")[3], pos=3, labels=sprintf("n=%i", table(sbts)[mp$names]), col=c("black"))
+        # title(sub=sprintf("Kruskal-Wallis p-value = %.1E", kt))
+        # legend("topleft", legend=c(paste(mp$names, sprintf("(%i)", table(sbts)[mp$names]), sep=" "), "", sprintf("K-W p = %.1E", kt)), bty="n", cex=0.8)
+        legend("topleft", legend=sprintf("Kruskal-Wallis p-value = %.1E", kt), bty="n")
+        dev.off()
+      }
+      return(list("kruskal.pvalue"=kt, "wilcoxon.pvalue"=wt))
+    }, eset=eset, sbts=sbts, boxp=boxp, resdir=resdir)
+  }, gid=gid, eset=eset, sbts=sbts, boxp=boxp, resdir=resdir)
+  pp <- do.call(c, mcres)
+  names(pp) <- Biobase::fData(eset)[match(gid, Biobase::fData(eset)[ , "ENTREZID"]), "SYMBOL"]
+  
+  ## write spreadsheets
+  dd <- sapply(pp, function(x) { return(x[[1]])})
+  dd <- data.frame("Kruskal.Wallis.pvalue"=dd, "Kruskal.Wallis.fdr"=p.adjust(dd, method="fdr"), Biobase::fData(eset)[match(gid, Biobase::fData(eset)[ , "ENTREZID"]), ])
+  write.csv(dd, file=file.path(resdir, "subtype_association_kruskal.csv"))
+  mapply(function(x, y, resdir) {
+    write.csv(x, file=file.path(resdir, sprintf("subtype_association_wilcoxon_%s.csv", y)))
+  }, x=lapply(pp, function(x) { return(x[[2]])}), y=names(pp), resdir=resdir)
+  
+  return(pp)
 }
 
-runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), saveres="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor=0.975, datasets, nthread=1, verbose=TRUE) {  
+runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor=0.975, datasets, nthread=1, verbose=TRUE) {  
 
   badchars <- "[\xb5]|[\n]|[,]|[;]|[:]|[-]|[+]|[*]|[%]|[$]|[#]|[{]|[}]|[[]|[]]|[|]|[\\^]|[/]|[\\]|[.]|[_]|[ ]"
 
   ## directory where all the analysis results will be stored
-  if(!file.exists(saveres)) { dir.create(saveres, showWarnings=FALSE, recursive=TRUE) }
-  if(!file.exists(file.path(saveres, "processed"))) { dir.create(file.path(saveres, "processed"), showWarnings=FALSE, recursive=TRUE) }
+  if(!file.exists(resdir)) { dir.create(resdir, showWarnings=FALSE, recursive=TRUE) }
+  if(!file.exists(file.path(resdir, "processed"))) { dir.create(file.path(resdir, "processed"), showWarnings=FALSE, recursive=TRUE) }
 
   ## number of cpu cores available for the analysis pipeline
   ## set to 'NULL' if all the available cores should be used
@@ -485,7 +573,7 @@ runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ss
     if (verbose) {
       message(sprintf("Get dataset %s", ddn))
     }
-    dataset.fn <- file.path(saveres, "processed", sprintf("%s_processed.RData", ddn))
+    dataset.fn <- file.path(resdir, "processed", sprintf("%s_processed.RData", ddn))
     if (!file.exists(dataset.fn)) {
       ## get dataset
       # inSilicoDb2::getCurationInfo(dataset=as.character(datasets[i, "Dataset.ID"]))
@@ -613,7 +701,6 @@ runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ss
     ## eset.all contains a list of gene-centric expression sets
   }
 
-
   ## align clinical information
   if (verbose) {
     message("Update clinical information")
@@ -647,7 +734,7 @@ runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ss
   eset.merged <- datasetMerging(esets=eset.all, nthread=nthread)
 
   ## identify potential duplicated samples
-  duplicates <- duplicateFinder(eset=eset.merged, var.genes=topvarg, dupl.cor=duplicates.cor)
+  duplicates <- duplicateFinder(eset=eset.merged, var.genes=topvar.genes, dupl.cor=duplicates.cor)
   ## annotate the separate esets and the merged eset
   tt <- sapply(duplicates, paste, collapse="///")
   ## merged eset
@@ -681,11 +768,14 @@ runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ss
       keepix <- setdiff(sampleNames(x), y)
       Biobase::exprs(x) <- Biobase::exprs(x)[ , keepix, drop=FALSE]
       Biobase::pData(x) <- Biobase::pData(x)[keepix, , drop=FALSE]
+      return(x)
     }, y=rmix)
   }
 
   ## log out from InSilicoDB
   InSilicoLogout()
+  
+  return(list("merged"=eset.merged, "each"=eset.all))
 }
 
 ## end
