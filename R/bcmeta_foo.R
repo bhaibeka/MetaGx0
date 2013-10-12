@@ -4,7 +4,8 @@
 ## September 1, 2013
 ########################
 
-checkNames <- function (eset) {
+`checkNames` <- 
+function (eset) {
   ## check feature and sample names in esets
   #
   # Args:
@@ -42,7 +43,8 @@ checkNames <- function (eset) {
 }
 
 
-probeGeneMapping <- function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL97", "GPL570", "GPL1352"), method=c("variance", "jetset")){
+`probeGeneMapping` <- 
+function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL97", "GPL570", "GPL1352"), method=c("variance", "jetset")){
   ## probe-gene mapping: which package to use for which platform
   #
   # Args:
@@ -145,7 +147,8 @@ probeGeneMapping <- function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL9
 }
 
 
-platformMerging <- function (esets) {
+`platformMerging` <- 
+function (esets) {
   #Open every GSE, specify in the configuration CSV, from InsilicoDB and create a list of Eset
   #structure call gselist
   #
@@ -180,7 +183,8 @@ platformMerging <- function (esets) {
 }
 
 
-subtypeClassification <- function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2003")) {
+`subtypeClassification` <- 
+function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2003")) {
   # Classify GSE subtype and give out the probability of being that subtype
   #
   # Args:
@@ -264,7 +268,8 @@ subtypeClassification <- function (eset, model=c("scmgene", "scmod1", "scmod2", 
 }
 
 
-datasetMerging <- function (esets, method=c("union", "intersect"), standardization=c("quantile", "robust.scaling", "scaling", "none"), nthread=1) {
+`datasetMerging` <- 
+function (esets, method=c("union", "intersect"), standardization=c("quantile", "robust.scaling", "scaling", "none"), nthread=1) {
   ## function merging all individual esets and merging them into a big eset
   #
   # Args:
@@ -390,7 +395,8 @@ datasetMerging <- function (esets, method=c("union", "intersect"), standardizati
   return (eset.merged)
 }
          
-duplicateFinder <- function (eset, var.genes=1000, dupl.cor=0.95, nthread=1) {
+`duplicateFinder` <- 
+function (eset, var.genes=1000, dupl.cor=0.95, nthread=1) {
   ## find duplicates based on correlation of gene expresison profiles
   #
   # Arga:
@@ -425,7 +431,8 @@ duplicateFinder <- function (eset, var.genes=1000, dupl.cor=0.95, nthread=1) {
   return(duplix)
 }
 
-subtypeAssociation <- function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
+`subtypeAssociation` <- 
+function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
   ## assess association between gene expression and subtypes
   #
   # Arga:
@@ -517,7 +524,8 @@ subtypeAssociation <- function (eset, geneid, boxp=TRUE, subtype.col, resdir, nt
   return(pp)
 }
 
-runPipeline <- function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor=0.975, datasets, nthread=1, verbose=TRUE) {  
+`runPipeline` <- 
+function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor=0.975, datasets, nthread=1, verbose=TRUE) {  
 
   badchars <- "[\xb5]|[\n]|[,]|[;]|[:]|[-]|[+]|[*]|[%]|[$]|[#]|[{]|[}]|[[]|[]]|[|]|[\\^]|[/]|[\\]|[.]|[_]|[ ]"
 
