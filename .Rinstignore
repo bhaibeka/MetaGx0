@@ -1,5 +1,5 @@
 inst/doc/.*[.]bib$
-inst/doc/Makefile
+inst/doc/*
 test/*
 TODO
 README
