@@ -17,7 +17,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL97", "GPL570", "GPL13
   # Returns:     
   #     updated ExpressionSet object with single probe per Entrez gene id
   
-  require(org.Hs.eg.db)
+  # require(org.Hs.eg.db)
   
   platform <- match.arg(platform)
   method <- match.arg(method)
@@ -25,6 +25,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL97", "GPL570", "GPL13
   platf.map <- rbind(c("MISC", "variance", ""),
     c("GPL8300", "jetset", "hgu95av2"),
     c("GPL96", "jetset", "hgu133a"),
+    c("GPL3921", "jetset", "hgu133a"),
     c("GPL97", "jetset", "hgu133b"),
     c("GPL570", "jetset", "hgu133plus2"),
     c("GPL1352", "jetset", "u133x3p"))

@@ -1,6 +1,6 @@
-\name{bcmeta-package}
-\alias{bcmeta-package}
-\alias{bcmeta}
+\name{MetaGx-package}
+\alias{MetaGx-package}
+\alias{MetaGx}
 \docType{package}
 \title{
 What the package does (short line)
@@ -12,7 +12,7 @@ More about what it does (maybe more than one line)
 }
 \details{
 \tabular{ll}{
-Package: \tab bcmeta\cr
+Package: \tab MetaGx\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
 Date: \tab 2013-10-12\cr

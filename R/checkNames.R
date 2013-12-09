@@ -14,7 +14,7 @@ function (eset) {
   # Returns:
   #   esets: updated expressionSet object with atching feature and sample names
   
-  require(Biobase)
+  # require(Biobase)
   ## check feature names
   check.feature <- intersect(rownames(Biobase::exprs(eset)), rownames(Biobase::fData(eset)))
   if (length(check.feature) == 0) {

@@ -25,6 +25,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
       c("MISC", "variance"),
       c("GPL8300", "jetset"),
       c("GPL96", "jetset"),
+      c("GPL3921", "jetset"),
       c("GPL97", "jetset"),
       c("GPL570", "jetset"),
       c("GPL1352", "jetset"))
