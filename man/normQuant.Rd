@@ -20,7 +20,7 @@ numeric matrix. Missing values are allowed.
 If ‘TRUE’, ties in each row of ‘A’ are treated in careful way. tied values will be normalized to the mean of the corresponding pooled quantiles.
 }
   \item{normvector}{
-numeric vector of values corresponding to the quantiles distribution to fit. Note that names of 'normvector' should be properly set to the colnames of 'A'
+numeric vector of values corresponding to the quantiles distribution to fit. Note that 'normvector' must have the same length than the number of columns of 'A'
 }
 }
 %\details{

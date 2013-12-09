@@ -19,7 +19,9 @@ function(A, ties=TRUE, normvector) {
 
   if(!missing(normvector)) {
     normvector <- sort(normvector, method="quick")
-    A <- A[ , intersect(colnames(A), names(normvector))]
+    if(length(normvector) != ncol(A)) {
+      stop("length of normvector must be equal to the number of columns of A")
+    }
   }
   
 	n <- dim(A)
