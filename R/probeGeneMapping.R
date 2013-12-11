@@ -6,7 +6,7 @@
 
 
 `probeGeneMapping` <- 
-function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL97", "GPL570", "GPL1352"), method=c("variance", "jetset")){
+function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL570", "GPL1352"), method=c("variance", "jetset")){
   ## probe-gene mapping: which package to use for which platform
   #
   # Args:
