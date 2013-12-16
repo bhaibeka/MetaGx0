@@ -55,7 +55,7 @@ function (esets, probe=c("intersect", "union")) {
         dimnames(ff) <- dimnames(Biobase::fData(esets[[j]]))
         Biobase::fData(eset2)[probex2, ] <- ff[probex2, , drop=FALSE]
         annotation(eset2) <- "merged"
-        eset <- combine(eset, eset2)
+        eset <- BiocGenerics::combine(eset, eset2)
       }
     }
     return(eset)
