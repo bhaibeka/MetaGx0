@@ -16,8 +16,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
   #   
   # Returns:     
   #     updated ExpressionSet object with single probe per Entrez gene id
-  
-  # require(org.Hs.eg.db)
+
   
   platform <- match.arg(platform)
   method <- match.arg(method)
@@ -39,7 +38,6 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
   Biobase::fData(eset) <- Biobase::fData(eset)[ , c("ENTREZID", "SYMBOL"), drop=FALSE]
   switch(method,
     "jetset" = {
-      require(jetset.bhk)
       js <- jetset.bhk::jscores(chip=params, probeset=rownames(Biobase::exprs(eset)))
       js <- js[rownames(Biobase::exprs(eset)), , drop=FALSE]
       ## identify the best probeset for each Entrez Gene ID
@@ -60,7 +58,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
       gid.uniq <- gid[!is.element(gid, gid.dupl)]
       gg.uniq <- names(geneid1)[is.element(geneid1, gid.uniq)]
       ## which are the best probe for each gene
-      js <- data.frame(js, "best"=FALSE)
+      js <- data.frame(js, "best"=FALSE, stringsAsFactors=FALSE)
       js[gg.uniq, "best"] <- TRUE
       ## data for duplicated gene ids
       if(length(gid.dupl) > 0) {	
@@ -103,7 +101,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
       Biobase::featureData(eset)@data[ , "SYMBOL"] <- as.character(gs)
     },
     {
-      stop(sprintf("Unknow method for probe-gene mapping for platform %s", platform))
+      stop(sprintf("Unknown method for probe-gene mapping for platform %s", platform))
     }
   )
   return(eset)

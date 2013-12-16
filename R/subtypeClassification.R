@@ -15,8 +15,6 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
   # Returns:
   #   eset: expression set with updated subtype information (subtype claling and subtype.probabilities)
   
-  require(genefu)
-  require(Biobase)
   model <- match.arg(model)
   
   ## convert SCM to SSP nomenclature

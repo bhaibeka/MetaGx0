@@ -15,10 +15,7 @@ function (eset, var.genes=1000, dupl.cor=0.95, nthread=1) {
   #
   # Returns
   #   list of duplicates sample names
-  require(Biobase)
-  if(nthread > 1) {
-    require(parallel)
-  }
+
   ## select the most variant genes
   ## at least in 80% of the datasets
   iix <- apply(exprs(eset), 1, function (x, y) {

@@ -89,7 +89,7 @@ function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
   
   ## write spreadsheets
   dd <- sapply(pp, function(x) { return(x[[1]])})
-  dd <- data.frame("Kruskal.Wallis.pvalue"=dd, "Kruskal.Wallis.fdr"=p.adjust(dd, method="fdr"), Biobase::fData(eset)[match(gid, Biobase::fData(eset)[ , "ENTREZID"]), ])
+  dd <- data.frame("Kruskal.Wallis.pvalue"=dd, "Kruskal.Wallis.fdr"=p.adjust(dd, method="fdr"), Biobase::fData(eset)[match(gid, Biobase::fData(eset)[ , "ENTREZID"]), ], stringsAsFactors=FALSE)
   write.csv(dd, file=file.path(resdir, "subtype_association_kruskal.csv"))
   mapply(function(x, y, resdir) {
     write.csv(x, file=file.path(resdir, sprintf("subtype_association_wilcoxon_%s.csv", y)))

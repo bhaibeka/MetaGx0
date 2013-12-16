@@ -22,12 +22,6 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
   # Returns:     
   #     The merging eset
   
-  require(Biobase)
-  require(genefu)
-  if(nthread > 1) {
-    require(parallel)
-  }
-  
   method <- match.arg(method)
   standardization <- match.arg(standardization)
   
@@ -79,8 +73,6 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
       ## do nothing
     },
     "quantile" = {
-      require(limma)
-      require(genefu)
       ## robust scaling followed by quantile normalization
       ee <- exprs(eset.merged)
       # ee <- apply(ee, 2, genefu::rescale)
@@ -96,9 +88,7 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
       ee <- limma::normalizeBetweenArrays(object=ee, method="quantile")
       exprs(eset.merged) <- ee
     },
-    "robust.scling" = {
-      ## robust scaling
-      require(genefu)
+    "robust.scaling" = {
       ## robust scaling
       ee <- exprs(eset.merged)
       # ee <- apply(ee, 2, genefu::rescale)
