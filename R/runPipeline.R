@@ -1,7 +1,7 @@
 ########################
 ## Benjamin Haibe-Kains
 ## All rights Reserved
-## September 1, 2013
+## December 23, 2013
 ########################
 
 `runPipeline` <- 
@@ -42,7 +42,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
 
   ## read info about datasets
   if (missing(datasets)) {
-    datasets <- read.csv(system.file(file.path("extdata", "datasets.csv"), package="bcmeta"), stringsAsFactors=FALSE)
+    datasets <- read.csv(system.file(file.path("extdata", "datasets.csv"), package="MetaGx"), stringsAsFactors=FALSE)
   }
   datasets <- datasets[datasets[ , "Include"], , drop=FALSE]
 
