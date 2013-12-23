@@ -92,14 +92,14 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
       ## eset is a gene-centric expressionSet object
   
       ## format clinical info
-      colnames(Biobase::phenoData(eset)@data) <- gsub(" ", ".", colnames(Biobase::phenoData(eset)@data))
-      cinfo <- intersect(cinfo, colnames(Biobase::phenoData(eset)@data))
+      colnames(Biobase::pData(eset)) <- gsub(" ", ".", colnames(Biobase::pData(eset)))
+      cinfo <- intersect(cinfo, colnames(Biobase::pData(eset)))
       ## transform factors into characters
-      Biobase::phenoData(eset)@data <- data.frame(apply(Biobase::phenoData(eset)@data, 2, function(x) {
+      Biobase::pData(eset) <- data.frame(apply(Biobase::pData(eset), 2, function(x) {
         if (is.factor(x)) { x <- as.character(x) }
         return(x)
         }), stringsAsFactors=FALSE)
-      Biobase::phenoData(eset)@data[Biobase::phenoData(eset)@data == "NA"] <- NA
+      Biobase::pData(eset)[Biobase::pData(eset) == "NA"] <- NA
       save(list=c("eset"), compress=TRUE, file=dataset.fn)
       if (verbose) {
         message("")
@@ -130,10 +130,10 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
           ee[rownames(Biobase::featureData(eset)@data), colnames(Biobase::featureData(eset)@data)] <- Biobase::featureData(eset)@data
           Biobase::featureData(eset.all[["GSE5327"]]) <- ee
           ## update pheno data
-          cp <- intersect(colnames(Biobase::phenoData(eset.all[["GSE5327"]])@data), colnames(Biobase::phenoData(eset)@data))
+          cp <- intersect(colnames(Biobase::phenoData(eset.all[["GSE5327"]])@data), colnames(Biobase::pData(eset)))
           ee <- data.frame(matrix(NA, nrow=length(cs), ncol=length(cp), dimnames=list(cs, cp)))
           ee[rownames(Biobase::phenoData(eset.all[["GSE5327"]])@data), cp] <- Biobase::phenoData(eset.all[["GSE5327"]])@data[ , cp]
-          ee[rownames(Biobase::phenoData(eset)@data), cp] <- Biobase::phenoData(eset)@data[ , cp]
+          ee[rownames(Biobase::pData(eset)), cp] <- Biobase::pData(eset)[ , cp]
           Biobase::phenoData(eset.all[["GSE5327"]]) <- ee
           ## rename the merged dataset
           names(eset.all)[names(eset.all) == "GSE2034"] <- "GSE2034.GSE5327"
@@ -162,10 +162,10 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
           ee[rownames(Biobase::featureData(eset.all[["GSE2034"]])@data), colnames(Biobase::featureData(eset.all[["GSE2034"]])@data)] <- Biobase::featureData(eset.all[["GSE2034"]])@data
           Biobase::featureData(eset.all[["GSE2034"]])@data <- ee
           ## update pheno data
-          cp <- intersect(colnames(Biobase::phenoData(eset.all[["GSE2034"]])@data), colnames(Biobase::phenoData(eset)@data))
+          cp <- intersect(colnames(Biobase::phenoData(eset.all[["GSE2034"]])@data), colnames(Biobase::pData(eset)))
           ee <- data.frame(matrix(NA, nrow=length(cs), ncol=length(cp), dimnames=list(cs, cp)))
           ee[rownames(Biobase::phenoData(eset.all[["GSE2034"]])@data), cp] <- Biobase::phenoData(eset.all[["GSE2034"]])@data[ , cp]
-          ee[rownames(Biobase::phenoData(eset)@data), cp] <- Biobase::phenoData(eset)@data[ , cp]
+          ee[rownames(Biobase::pData(eset)), cp] <- Biobase::pData(eset)[ , cp]
           Biobase::phenoData(eset.all[["GSE2034"]])@data <- ee
           ## rename the merged dataset
           names(eset.all)[names(eset.all) == "GSE2034"] <- "GSE2034.GSE5327"
@@ -176,9 +176,17 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
       },
       "GSE2109" = {
         ## select only breast tumors
-        iix <- Biobase::phenoData(eset)@data[ , "Anatomical.site"] == "breast"
+        iix <- Biobase::pData(eset)[ , "Anatomical.site"] == "breast"
         Biobase::exprs(eset) <- Biobase::exprs(eset)[ , iix, drop=FALSE]
-        Biobase::phenoData(eset)@data <- Biobase::phenoData(eset)@data[iix, , drop=FALSE]
+        Biobase::pData(eset) <- Biobase::pData(eset)[iix, , drop=FALSE]
+        eset.all <- c(eset.all, eset)
+        names(eset.all)[length(eset.all)] <- datasets[i, "Dataset.ID"]
+      },
+      "ISDB10278" = {
+        ## select only breast tumors
+        iix <- Biobase::pData(eset)[ , "tissue"] == "TUMOR"
+        Biobase::exprs(eset) <- Biobase::exprs(eset)[ , iix, drop=FALSE]
+        Biobase::pData(eset) <- Biobase::pData(eset)[iix, , drop=FALSE]
         eset.all <- c(eset.all, eset)
         names(eset.all)[length(eset.all)] <- datasets[i, "Dataset.ID"]
       },

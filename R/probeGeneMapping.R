@@ -36,6 +36,8 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
   
   ## keep only ENTREZID and SYMBOL in feature annotation
   Biobase::fData(eset) <- Biobase::fData(eset)[ , c("ENTREZID", "SYMBOL"), drop=FALSE]
+  Biobase::fData(eset)[ , "ENTREZID"] <- as.numeric(as.character(Biobase::fData(eset)[ , "ENTREZID"]))
+  Biobase::fData(eset)[ , "SYMBOL"] <- as.character(Biobase::fData(eset)[ , "SYMBOL"])
   switch(method,
     "jetset" = {
       js <- jetset.bhk::jscores(chip=params, probeset=rownames(Biobase::exprs(eset)))
