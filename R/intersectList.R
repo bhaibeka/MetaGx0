@@ -13,7 +13,7 @@ function(...) {
      if (nargs == 1 && is.list(args[[1]])) {
        do.call("intersectList", args[[1]])
      } else {
-       stop("cannot evaluate intersection fewer than 2 arguments")
+       return (args[[1]])
      }
    } else if (nargs == 2) {
      return (intersect(args[[1]], args[[2]]))
