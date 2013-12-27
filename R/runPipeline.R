@@ -102,7 +102,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
         if (is.factor(x)) { x <- stripWhiteSpace(as.character(x)) }
         return(x)
         }), stringsAsFactors=FALSE)
-      Biobase::pData(eset)[!is.na(Biobase::pData(eset)) | is.element(Biobase::pData(eset), c("NA", "N/A", "NILL", "NULL", "UNKNOWN", "UNK"))] <- NA
+      Biobase::pData(eset)[!is.na(Biobase::pData(eset)) & (Biobase::pData(eset) == "NA" | Biobase::pData(eset) == "N/A" | Biobase::pData(eset) == "NILL" | Biobase::pData(eset) == "NULL" | Biobase::pData(eset) == "UNKNOWN" | Biobase::pData(eset) == "UNK")] <- NA
       save(list=c("eset"), compress=TRUE, file=dataset.fn)
       if (verbose) {
         message("")
