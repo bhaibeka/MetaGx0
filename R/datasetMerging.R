@@ -10,8 +10,7 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
   ## function merging all individual esets and merging them into a big eset
   #
   # Args:
-  #   gselist: The list containing all GSE file that need to be merged.
-  #   STL: List containing all the subtype information for each GSE dataset.        
+  #   esets: The list containing all GSE file that need to be merged.      
   #   duplication.checker: A marker, either TRUE or FALSE if you you want to verify
   #                        wheter or not you have duplicate samples into your master 
   #                        gene expression matrix.

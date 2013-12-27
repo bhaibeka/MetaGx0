@@ -5,8 +5,11 @@
 ########################
 
 `runPipeline` <- 
-function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor=0.975, datasets, nthread=1, verbose=TRUE) {  
+function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp2003"), resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes=1000, duplicates.cor=0.975, datasets, merging.method=c("union", "intersection"), merging.std=c("quantile", "robust.scaling", "scaling", "none"), nthread=1, verbose=TRUE) {  
 
+  merging.method <- match.arg(merging.method)
+  merging.std <- match.arg(merging.std)
+  
   badchars <- "[\xb5]|[\n]|[,]|[;]|[:]|[-]|[+]|[*]|[%]|[$]|[#]|[{]|[}]|[[]|[]]|[|]|[\\^]|[/]|[\\]|[.]|[_]|[ ]"
 
   ## directory where all the analysis results will be stored
@@ -99,7 +102,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
         if (is.factor(x)) { x <- stripWhiteSpace(as.character(x)) }
         return(x)
         }), stringsAsFactors=FALSE)
-      Biobase::pData(eset)[Biobase::pData(eset) == "NA"] <- NA
+      Biobase::pData(eset)[!is.na(Biobase::pData(eset)) | is.element(Biobase::pData(eset), c("NA", "N/A", "NILL", "NULL", "UNKNOWN", "UNK"))] <- NA
       save(list=c("eset"), compress=TRUE, file=dataset.fn)
       if (verbose) {
         message("")
@@ -228,7 +231,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
   if (verbose) {
     message("Merge datasets")
   }
-  eset.merged <- datasetMerging(esets=eset.all, nthread=nthread)
+  eset.merged <- datasetMerging(esets=eset.all,  method=merging.method, standardization=merging.std, nthread=nthread)
 
   ## identify potential duplicated samples
   duplicates <- duplicateFinder(eset=eset.merged, var.genes=topvar.genes, dupl.cor=duplicates.cor)
