@@ -124,17 +124,17 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
           ee[rownames(Biobase::exprs(eset)), colnames(Biobase::exprs(eset))] <- Biobase::exprs(eset)
           Biobase::exprs(eset.all[["GSE5327"]]) <- ee
           ## update feature data
-          cf <- c(colnames(Biobase::featureData(eset.all[["GSE5327"]])@data), colnames(Biobase::featureData(eset)@data))
+          cf <- c(colnames(Biobase::fData(eset.all[["GSE5327"]])), colnames(Biobase::fData(eset)))
           ee <- data.frame(matrix(NA, nrow=length(cg), ncol=length(cf), dimnames=list(cg, cf)))
-          ee[rownames(Biobase::featureData(eset.all[["GSE5327"]])@data), colnames(Biobase::featureData(eset.all[["GSE5327"]])@data)] <- Biobase::featureData(eset.all[["GSE5327"]])@data
-          ee[rownames(Biobase::featureData(eset)@data), colnames(Biobase::featureData(eset)@data)] <- Biobase::featureData(eset)@data
-          Biobase::featureData(eset.all[["GSE5327"]]) <- ee
+          ee[rownames(Biobase::fData(eset.all[["GSE5327"]])), colnames(Biobase::fData(eset.all[["GSE5327"]]))] <- Biobase::fData(eset.all[["GSE5327"]])
+          ee[rownames(Biobase::fData(eset)), colnames(Biobase::fData(eset))] <- Biobase::fData(eset)
+          Biobase::fData(eset.all[["GSE5327"]]) <- ee
           ## update pheno data
-          cp <- intersect(colnames(Biobase::phenoData(eset.all[["GSE5327"]])@data), colnames(Biobase::pData(eset)))
+          cp <- intersect(colnames(Biobase::pData(eset.all[["GSE5327"]])), colnames(Biobase::pData(eset)))
           ee <- data.frame(matrix(NA, nrow=length(cs), ncol=length(cp), dimnames=list(cs, cp)))
-          ee[rownames(Biobase::phenoData(eset.all[["GSE5327"]])@data), cp] <- Biobase::phenoData(eset.all[["GSE5327"]])@data[ , cp]
+          ee[rownames(Biobase::pData(eset.all[["GSE5327"]])), cp] <- Biobase::pData(eset.all[["GSE5327"]])[ , cp]
           ee[rownames(Biobase::pData(eset)), cp] <- Biobase::pData(eset)[ , cp]
-          Biobase::phenoData(eset.all[["GSE5327"]]) <- ee
+          Biobase::pData(eset.all[["GSE5327"]]) <- ee
           ## rename the merged dataset
           names(eset.all)[names(eset.all) == "GSE2034"] <- "GSE2034.GSE5327"
         } else {
@@ -156,17 +156,17 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
           ee[rownames(Biobase::exprs(eset.all[["GSE2034"]])), colnames(Biobase::exprs(eset.all[["GSE2034"]]))] <- Biobase::exprs(eset.all[["GSE2034"]])
           Biobase::exprs(eset.all[["GSE2034"]]) <- ee
           ## update feature data
-          cf <- intersect(colnames(Biobase::featureData(eset.all[["GSE2034"]])@data), colnames(Biobase::featureData(eset)@data))
+          cf <- intersect(colnames(Biobase::fData(eset.all[["GSE2034"]])), colnames(Biobase::fData(eset)))
           ee <- data.frame(matrix(NA, nrow=length(cg), ncol=length(cf), dimnames=list(cg, cf)))
-          ee[rownames(Biobase::featureData(eset)@data), colnames(Biobase::featureData(eset)@data)] <- Biobase::featureData(eset)@data
-          ee[rownames(Biobase::featureData(eset.all[["GSE2034"]])@data), colnames(Biobase::featureData(eset.all[["GSE2034"]])@data)] <- Biobase::featureData(eset.all[["GSE2034"]])@data
-          Biobase::featureData(eset.all[["GSE2034"]])@data <- ee
+          ee[rownames(Biobase::fData(eset)), colnames(Biobase::fData(eset))] <- Biobase::fData(eset)
+          ee[rownames(Biobase::fData(eset.all[["GSE2034"]])), colnames(Biobase::fData(eset.all[["GSE2034"]]))] <- Biobase::fData(eset.all[["GSE2034"]])
+          Biobase::fData(eset.all[["GSE2034"]]) <- ee
           ## update pheno data
-          cp <- intersect(colnames(Biobase::phenoData(eset.all[["GSE2034"]])@data), colnames(Biobase::pData(eset)))
+          cp <- intersect(colnames(Biobase::pData(eset.all[["GSE2034"]])), colnames(Biobase::pData(eset)))
           ee <- data.frame(matrix(NA, nrow=length(cs), ncol=length(cp), dimnames=list(cs, cp)))
-          ee[rownames(Biobase::phenoData(eset.all[["GSE2034"]])@data), cp] <- Biobase::phenoData(eset.all[["GSE2034"]])@data[ , cp]
+          ee[rownames(Biobase::pData(eset.all[["GSE2034"]])), cp] <- Biobase::pData(eset.all[["GSE2034"]])[ , cp]
           ee[rownames(Biobase::pData(eset)), cp] <- Biobase::pData(eset)[ , cp]
-          Biobase::phenoData(eset.all[["GSE2034"]])@data <- ee
+          Biobase::pData(eset.all[["GSE2034"]]) <- ee
           ## rename the merged dataset
           names(eset.all)[names(eset.all) == "GSE2034"] <- "GSE2034.GSE5327"
         } else {
@@ -204,16 +204,16 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
   }
   for (j in 1:length(eset.all)) {
     ## same order for all datasets
-    Biobase::phenoData(eset.all[[j]])@data <- Biobase::phenoData(eset.all[[j]])@data[ , cinfo, drop=FALSE]
+    Biobase::pData(eset.all[[j]]) <- Biobase::pData(eset.all[[j]])[ , cinfo, drop=FALSE]
     ## ensure age, survival data are numeric
-    tt <- intersect(colnames(Biobase::phenoData(eset.all[[j]])@data), c("age", "size", "er", "her2", "pgr", "grade", c(paste(c("t", "e"), rep(c("rfs", "dmfs", "os"), each=2), sep="."))))
-    Biobase::phenoData(eset.all[[j]])@data[ , tt] <- data.frame(apply(Biobase::phenoData(eset.all[[j]])@data[ , tt, drop=FALSE], 2, as.numeric), stringsAsFactors=FALSE)
+    tt <- intersect(colnames(Biobase::pData(eset.all[[j]])), c("age", "size", "er", "her2", "pgr", "grade", c(paste(c("t", "e"), rep(c("rfs", "dmfs", "os"), each=2), sep="."))))
+    Biobase::pData(eset.all[[j]])[ , tt] <- data.frame(apply(Biobase::pData(eset.all[[j]])[ , tt, drop=FALSE], 2, as.numeric), stringsAsFactors=FALSE)
     ## create dfs data: use rfs when available, dmfs otherwise
-    surv.time <- Biobase::phenoData(eset.all[[j]])@data[ , "t.rfs"]
-    surv.time[is.na(Biobase::phenoData(eset.all[[j]])@data[ , "t.rfs"])] <- Biobase::phenoData(eset.all[[j]])@data[is.na(Biobase::phenoData(eset.all[[j]])@data[ , "t.rfs"]), "t.dmfs"]
-    surv.event <- Biobase::phenoData(eset.all[[j]])@data[ , "e.rfs"]
-    surv.event[is.na(Biobase::phenoData(eset.all[[j]])@data[ , "e.rfs"])] <- Biobase::phenoData(eset.all[[j]])@data[is.na(Biobase::phenoData(eset.all[[j]])@data[ , "e.rfs"]), "e.dmfs"]
-    Biobase::phenoData(eset.all[[j]])@data <- cbind(Biobase::phenoData(eset.all[[j]])@data, "t.dfs"=surv.time, "e.dfs"=surv.event)
+    surv.time <- Biobase::pData(eset.all[[j]])[ , "t.rfs"]
+    surv.time[is.na(Biobase::pData(eset.all[[j]])[ , "t.rfs"])] <- Biobase::pData(eset.all[[j]])[is.na(Biobase::pData(eset.all[[j]])[ , "t.rfs"]), "t.dmfs"]
+    surv.event <- Biobase::pData(eset.all[[j]])[ , "e.rfs"]
+    surv.event[is.na(Biobase::pData(eset.all[[j]])[ , "e.rfs"])] <- Biobase::pData(eset.all[[j]])[is.na(Biobase::pData(eset.all[[j]])[ , "e.rfs"]), "e.dmfs"]
+    Biobase::pData(eset.all[[j]]) <- cbind(Biobase::pData(eset.all[[j]]), "t.dfs"=surv.time, "e.dfs"=surv.event)
   }
 
   ## annotate with subtypes

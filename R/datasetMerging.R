@@ -27,7 +27,7 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
   
   ## all unique Entrez gene ids
   ## gene ids
-  ugid <- lapply(esets, function(x) { return(Biobase::featureData(x)@data) })
+  ugid <- lapply(esets, function(x) { return(Biobase::fData(x)) })
   ugid <- do.call(rbind, ugid)
   ugid <- ugid[!is.na(ugid[ , "ENTREZID"]) & !duplicated(as.character(ugid[ , "ENTREZID"])), , drop=FALSE]
   rownames(ugid) <- gsub(sprintf("(%s).", paste(names(esets), collapse="|")), "", rownames(ugid))
@@ -36,7 +36,7 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
       feature.merged <- ugid
     },
     "intersect" = {
-      feature.merged <- lapply(esets, function(x) { return(as.character(Biobase::featureData(x)@data[ , "ENTREZID"])) })
+      feature.merged <- lapply(esets, function(x) { return(as.character(Biobase::fData(x)[ , "ENTREZID"])) })
       feature.merged <- table(unlist(feature.merged))
       feature.merged <- names(feature.merged)[feature.merged == length(esets)]
       feature.merged <- ugid[match(feature.merged, as.character(ugid[ , "ENTREZID"])), , drop=FALSE]
@@ -54,7 +54,7 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
   }, y=rownames(feature.merged))
   exprs.merged <- do.call(cbind, exprs.merged)
   ## clinical info
-  ucid <- lapply(esets, function(x) { return(colnames(phenoData(x)@data)) })
+  ucid <- lapply(esets, function(x) { return(colnames(Biobase::pData(x))) })
   ucid <- table(unlist(ucid))
   ucid <- names(ucid)[ucid == length(esets)]
   clinicinfo.merged <- lapply(esets, function (x , y) {

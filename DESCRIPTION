@@ -2,7 +2,7 @@ Package: MetaGx
 Type: Package
 Title: R package for meta-analysis of breast cancer gene expressions
 Version: 0.0.2
-Date: 2013-10-12
+Date: 2013-12-27
 Author: Benjamin Haibe-Kains, Pierre-Olivier Bachant-Winner
 Maintainer: Benjamin Haibe-Kains <bhklab.research@gmail.com>
 Description: This package contains a set of functions to perform meta-analysis of breast cancer gene expressions.

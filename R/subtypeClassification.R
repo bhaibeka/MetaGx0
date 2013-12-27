@@ -27,12 +27,12 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
   sbtn2 <- c("LumA", "LumB", "Her2", "Basal", "Normal")
   
   datage <- t(Biobase::exprs(eset))   
-  annotge <- cbind("probe"=rownames(Biobase::featureData(eset)@data), "EntrezGene.ID"=as.character(Biobase::featureData(eset)@data[ , "ENTREZID"]))
+  annotge <- cbind("probe"=rownames(Biobase::fData(eset)), "EntrezGene.ID"=as.character(Biobase::fData(eset)[ , "ENTREZID"]))
   rownames(annotge) <- as.character(annotge[ , "probe"])
   
   switch(model,
     "scmgene" = {
-      sbts <- genefu::subtype.cluster.predict(sbt.model=scmgene.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype2", "subtype.proba2")]
+      sbts <- genefu::subtype.cluster.predict(sbt.model=genefu::scmgene.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype2", "subtype.proba2")]
       names(sbts) <- c("subtype", "subtype.proba")
       ## use SSP nomenclature
       ## update subtype calling
@@ -44,7 +44,7 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
       colnames(sbts$subtype.proba)[iix] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
     },
     "scmod1" = {
-      sbts <- genefu::subtype.cluster.predict(sbt.model=scmod1.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype2", "subtype.proba2")]
+      sbts <- genefu::subtype.cluster.predict(sbt.model=genefu::scmod1.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype2", "subtype.proba2")]
       names(sbts) <- c("subtype", "subtype.proba")
       ## use SSP nomenclature
       ## update subtype calling
@@ -56,7 +56,7 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
       colnames(sbts$subtype.proba)[iix] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
     },
     "scmod2" = {
-      sbts <- genefu::subtype.cluster.predict(sbt.model=scmod2.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype2", "subtype.proba2")]
+      sbts <- genefu::subtype.cluster.predict(sbt.model=genefu::scmod2.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype2", "subtype.proba2")]
       names(sbts) <- c("subtype", "subtype.proba")
       ## use SSP nomenclature
       ## update subtype calling
@@ -68,13 +68,13 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
       colnames(sbts$subtype.proba)[iix] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
     },
     "pam50" = {
-      sbts <- genefu::intrinsic.cluster.predict(sbt.model=pam50.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype", "subtype.proba")]
+      sbts <- genefu::intrinsic.cluster.predict(sbt.model=genefu::pam50.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype", "subtype.proba")]
     },
     "ssp2006" = {
-      sbts <- genefu::intrinsic.cluster.predict(sbt.model=ssp2006.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype", "subtype.proba")]
+      sbts <- genefu::intrinsic.cluster.predict(sbt.model=genefu::ssp2006.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype", "subtype.proba")]
     },
     "ssp2003" = {
-      sbts <- genefu::intrinsic.cluster.predict(sbt.model=ssp2003.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype", "subtype.proba")]
+      sbts <- genefu::intrinsic.cluster.predict(sbt.model=genefu::ssp2003.robust, data=datage, annot=annotge, do.mapping=TRUE)[c("subtype", "subtype.proba")]
     },
     {
       stop("Unknown subtype classification model")
@@ -82,7 +82,7 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
   
   ## merge clinical information and subtype classification
   colnames(sbts$subtype.proba) <- paste("subtyproba", colnames(sbts$subtype.proba), sep=".")
-  Biobase::phenoData(eset)@data <- cbind(Biobase::phenoData(eset)@data, "subtype"=sbts$subtype, sbts$subtype.proba)
+  Biobase::pData(eset) <- cbind(Biobase::pData(eset), "subtype"=sbts$subtype, sbts$subtype.proba)
   
   return(eset)
 }

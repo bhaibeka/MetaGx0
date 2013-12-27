@@ -78,14 +78,14 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
       gsymb <- js[js[ , "best"], "symbol"]
       Biobase::exprs(eset) <- Biobase::exprs(eset)[probes, , drop=FALSE]
       rownames(Biobase::exprs(eset)) <- names(probes)
-      Biobase::featureData(eset)@data <- Biobase::featureData(eset)@data[probes, , drop=FALSE]
-      rownames(Biobase::featureData(eset)@data) <- names(probes)
-      Biobase::featureData(eset)@data[ , "ENTREZID"] <- gid
-      Biobase::featureData(eset)@data[ , "SYMBOL"] <- gsymb
+      Biobase::fData(eset) <- Biobase::fData(eset)[probes, , drop=FALSE]
+      rownames(Biobase::fData(eset)) <- names(probes)
+      Biobase::fData(eset)[ , "ENTREZID"] <- gid
+      Biobase::fData(eset)[ , "SYMBOL"] <- gsymb
     },
     "variance" = {
       ## other platform, select the most variant probe per Entrez Gene ID
-      gid <- as.character(Biobase::featureData(eset)@data[ , "ENTREZID"])
+      gid <- as.character(Biobase::fData(eset)[ , "ENTREZID"])
       names(gid) <- rownames(Biobase::exprs(eset))
       ugid <- sort(unique(gid))
       rr <- genefu::geneid.map(geneid1=gid, data1=t(Biobase::exprs(eset)), geneid2=ugid)
@@ -93,14 +93,14 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
       names(probes) <- paste("geneid", rr$geneid1, sep=".")
       Biobase::exprs(eset) <- Biobase::exprs(eset)[probes, , drop=FALSE]
       rownames(Biobase::exprs(eset)) <- names(probes)
-      Biobase::featureData(eset)@data <- Biobase::featureData(eset)@data[probes, , drop=FALSE]
-      rownames(Biobase::featureData(eset)@data) <- names(probes)
+      Biobase::fData(eset) <- Biobase::fData(eset)[probes, , drop=FALSE]
+      rownames(Biobase::fData(eset)) <- names(probes)
       ## get the gene symbols from entrez gene id using org.Hs.eg.db
       gs <- toTable(org.Hs.egSYMBOL)
       gs <- gs[!duplicated(gs[ , "gene_id"]), , drop=FALSE]
       rownames(gs) <- gs[ , "gene_id"]
-      gs <- gs[as.character(Biobase::featureData(eset)@data[ , "ENTREZID"]), "symbol"]
-      Biobase::featureData(eset)@data[ , "SYMBOL"] <- as.character(gs)
+      gs <- gs[as.character(Biobase::fData(eset)[ , "ENTREZID"]), "symbol"]
+      Biobase::fData(eset)[ , "SYMBOL"] <- as.character(gs)
     },
     {
       stop(sprintf("Unknown method for probe-gene mapping for platform %s", platform))
