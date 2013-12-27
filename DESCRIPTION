@@ -8,5 +8,5 @@ Maintainer: Benjamin Haibe-Kains <bhklab.research@gmail.com>
 Description: This package contains a set of functions to perform meta-analysis of breast cancer gene expressions.
 License: Artistic-2.0
 Imports:
-Depends: BiocGenerics, inSilicoDb2, jetset.bhk, survival, survcomp, genefu, Biobase, org.Hs.eg.db
+Depends: Biobase, BiocGenerics, org.Hs.eg.db, inSilicoDb2, jetset.bhk, survival, survcomp, genefu
 LinkingTo:

@@ -27,8 +27,8 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
   sbtn2 <- c("LumA", "LumB", "Her2", "Basal", "Normal")
   
   datage <- t(Biobase::exprs(eset))   
-  annotge <- cbind("probe"=rownames(Biobase::fData(eset)), "EntrezGene.ID"=as.character(Biobase::fData(eset)[ , "ENTREZID"]))
-  rownames(annotge) <- as.character(annotge[ , "probe"])
+  annotge <- cbind("probe"=rownames(Biobase::fData(eset)), "EntrezGene.ID"=stripWhiteSpace(as.character(Biobase::fData(eset)[ , "ENTREZID"])))
+  rownames(annotge) <- stripWhiteSpace(as.character(annotge[ , "probe"]))
   
   switch(model,
     "scmgene" = {
@@ -38,7 +38,7 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
       ## update subtype calling
       ss <- factor(x=sbts$subtype)
       levels(ss)[match(sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SCM.nomenclature"], levels(ss))] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
-      sbts$subtype <- as.character(ss)
+      sbts$subtype <- stripWhiteSpace(as.character(ss))
       ## update subtype probabilities
       iix <- match(sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SCM.nomenclature"], colnames(sbts$subtype.proba))
       colnames(sbts$subtype.proba)[iix] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
@@ -50,7 +50,7 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
       ## update subtype calling
       ss <- factor(x=sbts$subtype)
       levels(ss)[match(sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SCM.nomenclature"], levels(ss))] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
-      sbts$subtype <- as.character(ss)
+      sbts$subtype <- stripWhiteSpace(as.character(ss))
       ## update subtype probabilities
       iix <- match(sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SCM.nomenclature"], colnames(sbts$subtype.proba))
       colnames(sbts$subtype.proba)[iix] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
@@ -62,7 +62,7 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
       ## update subtype calling
       ss <- factor(x=sbts$subtype)
       levels(ss)[match(sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SCM.nomenclature"], levels(ss))] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]
-      sbts$subtype <- as.character(ss)
+      sbts$subtype <- stripWhiteSpace(as.character(ss))
       ## update subtype probabilities
       iix <- match(sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SCM.nomenclature"], colnames(sbts$subtype.proba))
       colnames(sbts$subtype.proba)[iix] <- sbt.conv[!is.na(sbt.conv[ , "SCM.nomenclature"]), "SSP.nomenclature"]

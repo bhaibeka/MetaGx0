@@ -1,0 +1,28 @@
+########################
+## Benjamin Haibe-Kains
+## All rights Reserved
+## September 1, 2013
+########################
+
+
+`stripWhiteSpace` <-
+function(str, method=c("both", "head", "tail")) {
+  method <- match.arg(method)
+  str2 <- NULL
+  switch(method,
+    "both" = {
+     str2 <- gsub("^[ \t]+", "", str)
+     str2 <- gsub("[ \t]+$", "", str2)
+    },
+    "head" = {
+      str2 <- gsub("^[ \t]+", "", str)
+    },
+    "tail" = {
+      str2 <- gsub("[ \t]+$", "", tt)
+    }
+  )
+  return(str2)
+}
+
+## End
+
