@@ -29,17 +29,17 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
   ## gene ids
   ugid <- lapply(esets, function(x) { return(Biobase::fData(x)) })
   ugid <- do.call(rbind, ugid)
-  ugid <- ugid[!is.na(ugid[ , "ENTREZID"]) & !duplicated(as.character(ugid[ , "ENTREZID"])), , drop=FALSE]
+  ugid <- ugid[!is.na(ugid[ , "ENTREZID"]) & !duplicated(ugid[ , "ENTREZID"]), , drop=FALSE]
   rownames(ugid) <- gsub(sprintf("(%s).", paste(names(esets), collapse="|")), "", rownames(ugid))
   switch (method,
     "union" = {
       feature.merged <- ugid
     },
     "intersect" = {
-      feature.merged <- lapply(esets, function(x) { return(as.character(Biobase::fData(x)[ , "ENTREZID"])) })
+      feature.merged <- lapply(esets, function(x) { return(stripWhiteSpace(as.character(Biobase::fData(x)[ , "ENTREZID"]))) })
       feature.merged <- table(unlist(feature.merged))
       feature.merged <- names(feature.merged)[feature.merged == length(esets)]
-      feature.merged <- ugid[match(feature.merged, as.character(ugid[ , "ENTREZID"])), , drop=FALSE]
+      feature.merged <- ugid[match(feature.merged, stripWhiteSpace(as.character(ugid[ , "ENTREZID"]))), , drop=FALSE]
     },
     {
       stop("Unknown method")

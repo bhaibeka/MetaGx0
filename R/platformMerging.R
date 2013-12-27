@@ -38,7 +38,7 @@ function (esets, probe=c("intersect", "union")) {
     Biobase::exprs(eset)[probex2, ] <- Biobase::exprs(esets[[1]])[probex2, , drop=FALSE]
     ## update feature data
     fData(eset) <- data.frame(matrix(NA, nrow=length(probex), ncol=ncol(Biobase::fData(eset)), dimnames=list(probex, colnames(Biobase::fData(eset)))))
-    ff <- apply(Biobase::fData(esets[[1]]), 2, as.character)
+    ff <- apply(Biobase::fData(esets[[1]]), 2, function (x) { return(stripWhiteSpace(as.character(x))) })
     dimnames(ff) <- dimnames(Biobase::fData(esets[[1]]))
     Biobase::fData(eset)[probex2, ] <- ff[probex2, , drop=FALSE]
     annotation(eset) <- "merged"
@@ -51,7 +51,7 @@ function (esets, probe=c("intersect", "union")) {
         Biobase::exprs(eset2)[probex2, ] <- Biobase::exprs(esets[[j]])[probex2, , drop=FALSE]
         ## update feature data
         fData(eset2) <- data.frame(matrix(NA, nrow=length(probex), ncol=ncol(Biobase::fData(eset2)), dimnames=list(probex, colnames(Biobase::fData(eset2)))))
-        ff <- apply(Biobase::fData(esets[[j]]), 2, as.character)
+        ff <- apply(Biobase::fData(esets[[j]]), 2, function (x) { return (stripWhiteSpace(as.character(x))) })
         dimnames(ff) <- dimnames(Biobase::fData(esets[[j]]))
         Biobase::fData(eset2)[probex2, ] <- ff[probex2, , drop=FALSE]
         annotation(eset2) <- "merged"

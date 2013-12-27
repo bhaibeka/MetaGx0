@@ -21,7 +21,7 @@ function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
   }
   
   if (missing(geneid)) {
-    gened <- as.character(Biobase::fData(eset)[ , "ENTREZID"])
+    gened <- stripWhiteSpace(as.character(Biobase::fData(eset)[ , "ENTREZID"]))
   }
   
   ## for a single expressionSet object
@@ -42,7 +42,7 @@ function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
   }
   
   ## extract genes
-  gid <- intersect(geneid, as.character(Biobase::fData(eset)[ , "ENTREZID"]))
+  gid <- intersect(geneid, stripWhiteSpace(as.character(Biobase::fData(eset)[ , "ENTREZID"])))
   if (length(gid) == 0) {
     stop("Genes not in the expressionSet object")
   }

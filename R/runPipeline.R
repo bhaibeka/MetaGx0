@@ -58,7 +58,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
   ## download all datasets
   eset.all <- NULL
   for (i in 1:nrow(datasets)) {
-    ddn <- as.character(datasets[i, "Dataset.ID"])
+    ddn <- stripWhiteSpace(as.character(datasets[i, "Dataset.ID"]))
     if (verbose) {
       message(sprintf("Get dataset %s", ddn))
     }
@@ -67,7 +67,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
       ## get dataset
       # inSilicoDb2::getCurationInfo(dataset=as.character(datasets[i, "Dataset.ID"]))
       platf <- inSilicoDb2::getPlatforms(dataset=ddn)
-      esets <- inSilicoDb2::getDatasets(dataset=ddn, norm=as.character(datasets[i, "Normalization"]), curation=datasets[i, "Curation.ID"], features="PROBE")
+      esets <- inSilicoDb2::getDatasets(dataset=ddn, norm=stripWhiteSpace(as.character(datasets[i, "Normalization"])), curation=datasets[i, "Curation.ID"], features="PROBE")
       if (is.null(unlist(esets))) {
         stop("Rerun the script when data are ready to download from InSilicoDB")
       }
@@ -96,7 +96,7 @@ function (sbt.model=c("scmgene", "scmod2", "scmod1", "pam50", "ssp2006", "ssp200
       cinfo <- intersect(cinfo, colnames(Biobase::pData(eset)))
       ## transform factors into characters
       Biobase::pData(eset) <- data.frame(apply(Biobase::pData(eset), 2, function(x) {
-        if (is.factor(x)) { x <- as.character(x) }
+        if (is.factor(x)) { x <- stripWhiteSpace(as.character(x)) }
         return(x)
         }), stringsAsFactors=FALSE)
       Biobase::pData(eset)[Biobase::pData(eset) == "NA"] <- NA
