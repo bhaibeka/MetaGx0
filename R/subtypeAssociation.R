@@ -6,22 +6,25 @@
 
 
 `subtypeAssociation` <- 
-function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
+function (eset, geneid, boxp=TRUE, subtype.col, resdir="cache", nthread=1) {
   ## assess association between gene expression and subtypes
   #
   # Arga:
   #   eset: an expressionSet object
   #   gene: vector of Entrez Gene IDs. If missing, all genes will be considered.
+  #   subtype.col: color for each molecular subtype
   #
   # Returns
-  #   list containing p-values and effect sizes
+  #   list containing p-values for comparisons
+  #   Kruskal-Wallist to test whether the expression of the genes(s) of interest is dependent on the molecular subtypes
+  #   pairwise wilcoxon rank sum test p-values, is the expression of the gene(s) of interest higher in the subtype in rows compared to the subtype in column?
   
   if (class(eset) != "ExpressionSet") {
     stop("Handling list of expressionSet objects is not implemented yet")
   }
   
   if (missing(geneid)) {
-    gened <- stripWhiteSpace(as.character(Biobase::fData(eset)[ , "ENTREZID"]))
+    gened <- Biobase::fData(eset)[ , "ENTREZID"]
   }
   
   ## for a single expressionSet object
@@ -42,7 +45,7 @@ function (eset, geneid, boxp=TRUE, subtype.col, resdir, nthread=1) {
   }
   
   ## extract genes
-  gid <- intersect(geneid, stripWhiteSpace(as.character(Biobase::fData(eset)[ , "ENTREZID"])))
+  gid <- intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"])
   if (length(gid) == 0) {
     stop("Genes not in the expressionSet object")
   }
