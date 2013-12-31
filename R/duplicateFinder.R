@@ -29,7 +29,7 @@ function (eset, var.genes=1000, dupl.cor=0.95, nthread=1) {
     }, data=exprs(eset)[varg, , drop=FALSE])
   cor.samples <- do.call(rbind, mcres)
   diag(cor.samples) <- NA
-  ## create list of duplictaes for each sample
+  ## create list of duplicates for each sample
   duplix <- apply(cor.samples, 1, function (x, y) {
     res <- names(x)[!is.na(x) & x > y]
     return (res)
