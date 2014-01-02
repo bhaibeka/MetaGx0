@@ -200,6 +200,9 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
       })
     ## eset.all contains a list of gene-centric expression sets
   }
+  
+  ## log out from InSilicoDB
+  InSilicoLogout()
 
   ## align clinical information
   if (verbose) {
@@ -234,7 +237,7 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
   eset.merged <- datasetMerging(esets=eset.all,  method=merging.method, standardization=merging.std, nthread=nthread)
 
   ## identify potential duplicated samples
-  duplicates <- duplicateFinder(eset=eset.merged, var.genes=topvar.genes, dupl.cor=duplicates.cor)
+  duplicates <- duplicateFinder(eset=eset.merged, topvar.genes=topvar.genes, dupl.cor=duplicates.cor, method="spearman", nthread=nthread)
   ## annotate the separate esets and the merged eset
   tt <- sapply(duplicates, paste, collapse="///")
   ## merged eset
@@ -271,11 +274,8 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
       return(x)
     }, y=rmix)
   }
-
-  ## log out from InSilicoDB
-  InSilicoLogout()
   
-  return(list("merged"=eset.merged, "each"=eset.all))
+  return (list("merged"=eset.merged, "each"=eset.all))
 }
 
 
