@@ -6,7 +6,7 @@
 
 
 `subtypeCorrelation` <- 
-function (eset, geneid, plot=TRUE, method=c("pearson", "spearman"), weighted=TRUE, condensed=TRUE, resdir="cache", nthread=1) {
+function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), weighted=TRUE, condensed=TRUE, resdir="cache", nthread=1) {
   ## assess (weighted) correlation between gene expression with respect to subtypes
   #
   # Arga:
@@ -76,32 +76,43 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman"), weighted=TRU
     warning(sprintf("%i/%i genes were present in the expressionSet object", length(gid), length(geneid)))
   }
   expr <- Biobase::exprs(eset)[gid, , drop=FALSE]
-  if (method == "spearman") {
-    expr <- t(apply(expr, 1, rank))
-  }
-  
+    
   ## compute subtype-specific pairwise correlation across query genes
-  pairs <- t(combn(1:length(gid), 2, simplify=TRUE))
-  splitix <- parallel::splitIndices(nx=nrow(pairs), ncl=nthread)
-  splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, ...) {    
-    res <- apply(pairs[x, , drop=FALSE], 1, function (x, ...) {
-      res <- apply(sbts.proba, 2, function (w, x, expr) {
-        return (wcor(d=t(expr[x, , drop=FALSE]), w=w))
-      }, x=x, expr=expr)
-      return (res)
-    })
-    return (res)
-  }, expr=expr, sbts.proba=sbts.proba)
-  res <- t(do.call(cbind, mcres))
   
-  rr <- unlist(apply(res, 2, function (x, y, gid) {
-    rr <- matrix(NA, nrow=length(gid), ncol=length(gid), dimnames=list(gid, gid))
-    rr[y] <- x
-    rr[y[ , 2:1]] <- x
-    diag(rr) <- 1
-    return (list(rr))
-  }, y=pairs, gid), recursive=FALSE)
+  ## slow code
+  # if (method == "spearman") {
+  #   expr <- t(apply(expr, 1, rank))
+  # }
+  # pairs <- t(combn(1:length(gid), 2, simplify=TRUE))
+  # splitix <- parallel::splitIndices(nx=nrow(pairs), ncl=nthread)
+  # splitix <- splitix[sapply(splitix, length) > 0]
+  # mcres <- parallel::mclapply(splitix, function(x, ...) {    
+  #   res <- apply(pairs[x, , drop=FALSE], 1, function (x, ...) {
+  #     res <- apply(sbts.proba, 2, function (w, x, expr) {
+  #       return (wcor(d=t(expr[x, , drop=FALSE]), w=w))
+  #     }, x=x, expr=expr)
+  #     return (res)
+  #   })
+  #   return (res)
+  # }, expr=expr, sbts.proba=sbts.proba)
+  # res <- t(do.call(cbind, mcres))
+  # rr <- unlist(apply(res, 2, function (x, y, gid) {
+  #   rr <- matrix(NA, nrow=length(gid), ncol=length(gid), dimnames=list(gid, gid))
+  #   rr[y] <- x
+  #   rr[y[ , 2:1]] <- x
+  #   diag(rr) <- 1
+  #   return (list(rr))
+  # }, y=pairs, gid), recursive=FALSE)
+  
+  ## using mRMRe
+  nn <- mRMRe::get.thread.count()
+  mRMRe::set.thread.count(nthread)
+  rr <- unlist(apply(sbts.proba, 2, function (w, expr, method) {
+    expr <- mRMRe::mRMR.data(data=data.frame(expr), weights=w)
+    cor.genes <- mRMRe::mim(object=expr, continuous_estimator=method, method="cor")
+    return (list(cor.genes))
+  }, expr=expr, method=method), recursive=FALSE)
+  mRMRe::set.thread.count(nn)
   
   dd <- lapply(rr, data.frame)
   if (condensed) {
