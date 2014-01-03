@@ -60,6 +60,7 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
   ## extract genes
   gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
   gsymb <- Biobase::fData(eset)[gid, "SYMBOL"]
+  gentrez <- Biobase::fData(eset)[gid, "ENTREZID"]
   names(gsymb) <- gid
   if (length(gid) == 0) {
     stop("Genes not in the expressionSet object")
@@ -74,10 +75,11 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
   
   splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, ...) {    
-    pp <- lapply(gid[x], function (x, expr, gsymb, sbts, sbtu) {
+  mcres <- parallel::mclapply(splitix, function(x, gid, expr, gentrez, gsymb, sbts, sbtu) {    
+    pp <- lapply(gid[x], function (x, expr, gentrez, gsymb, sbts, sbtu) {
       xx <- expr[x, ]
       gs <- gsymb[x]
+      ge <- gentrez[x]
       ## kruskal-wallis test
       kt <- kruskal.test(x=xx, g=sbts)$p.value
       ## pairwise wilcoxon test
@@ -89,11 +91,13 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
       nix <- !is.na(t(wt2))
       wt[colnames(wt2), rownames(wt2)][nix] <- t(wt2)[nix]
       diag(wt) <- 1
-      return (list("kruskal.pvalue"=kt, "wilcoxon.pvalue"=wt, "symbol"=gs, "x"=xx))
-    }, expr=expr, gsymb=gsymb, sbts=sbts, sbtu=sbtu)
-  }, gid=gid, expr=Biobase::exprs(eset)[gid, , drop=FALSE], gsymb=gsymb, sbts=sbts, sbtu=sbtu)
+      return (list("kruskal.pvalue"=kt, "wilcoxon.pvalue"=wt, "entrez"=ge, "symbol"=gs, "x"=xx))
+    }, expr=expr, gentrez=gentrez, gsymb=gsymb, sbts=sbts, sbtu=sbtu)
+  }, gid=gid, expr=Biobase::exprs(eset)[gid, , drop=FALSE], gentrez=gentrez, gsymb=gsymb, sbts=sbts, sbtu=sbtu)
   pp <- do.call(c, mcres)
-  names(pp) <- sapply(pp, function (x) { return (x$symbol) })
+  nn <- sapply(pp, function (x) { return (x$symbol) })
+  nn[is.na(nn)] <- paste("ENTREZID", sapply(pp, function (x) { return (x$symbol) })[is.na(nn)], sep=".")
+  names(pp) <- nn
   
   if (plot) {
     if (condensed) { pdf(file.path(resdir, "subtype_association_boxplot.pdf")) }

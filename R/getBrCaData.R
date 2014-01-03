@@ -263,12 +263,12 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
     }
     rmix <- unique(unlist(rmix))
     ## merged eset
-    keepix <- setdiff(sampleNames(eset.merged), rmix)
+    keepix <- setdiff(Biobase::sampleNames(eset.merged), rmix)
     Biobase::exprs(eset.merged) <- Biobase::exprs(eset.merged)[ , keepix, drop=FALSE]
     Biobase::pData(eset.merged) <- Biobase::pData(eset.merged)[keepix, , drop=FALSE]
     ## individual esets
     eset.all <- lapply(eset.all, function (x, y) {
-      keepix <- setdiff(sampleNames(x), y)
+      keepix <- setdiff(Biobase::sampleNames(x), y)
       Biobase::exprs(x) <- Biobase::exprs(x)[ , keepix, drop=FALSE]
       Biobase::pData(x) <- Biobase::pData(x)[keepix, , drop=FALSE]
       return(x)

@@ -22,18 +22,6 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   #   Kruskal-Wallist to test whether the expression of the genes(s) of interest is dependent on the molecular subtypes
   #   pairwise wilcoxon rank sum test p-values, is the expression of the gene(s) of interest higher in the subtype in rows compared to the subtype in column?
   
-  ######################
-  
-  wcor <- function (d, w, na.rm=TRUE) {
-    s <- sum(w, na.rm=na.rm)
-    m1 <- sum(d[ , 1L] * w, na.rm=na.rm) / s
-    m2 <- sum(d[ , 2L] * w, na.rm=na.rm) / s
-    res <- (sum(d[ , 1L] * d[ , 2L] * w, na.rm=na.rm) / s - m1 * m2) / sqrt((sum(d[ , 1L]^2 * w, na.rm=na.rm) / s - m1^2) * (sum(d[ , 2L]^2 * w, na.rm=na.rm) / s - m2^2))
-    return (res)
-  }
-  
-  ######################
-  
   if (class(eset) != "ExpressionSet") {
     stop("Handling list of expressionSet objects is not implemented yet")
   }
@@ -103,12 +91,12 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   #   diag(rr) <- 1
   #   return (list(rr))
   # }, y=pairs, gid), recursive=FALSE)
-  
+
   ## using mRMRe
   nn <- mRMRe::get.thread.count()
   mRMRe::set.thread.count(nthread)
   rr <- unlist(apply(sbts.proba, 2, function (w, expr, method) {
-    expr <- mRMRe::mRMR.data(data=data.frame(expr), weights=w)
+    expr <- mRMRe::mRMR.data(data=data.frame(t(expr)), weights=w)
     cor.genes <- mRMRe::mim(object=expr, continuous_estimator=method, method="cor")
     return (list(cor.genes))
   }, expr=expr, method=method), recursive=FALSE)
