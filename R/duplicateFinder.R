@@ -26,7 +26,7 @@ function (eset, topvar.genes=1000, dupl.cor=0.99, method=c("pearson", "spearman"
   varg <- Biobase::featureNames(eset)[iix][order(apply(exprs(eset)[iix, , drop=FALSE], 1, var, na.rm=TRUE), decreasing=TRUE)[1:topvar.genes]]
   
   ## alternative, inefficient approach
-  # pairs <- t(combn(1:length(sampleNames(eset)), 2, simplify=TRUE))
+  # pairs <- t(combn(1:length(Biobase::sampleNames(eset)), 2, simplify=TRUE))
   # splitix <- parallel::splitIndices(nx=nrow(pairs), ncl=nthread)
   # splitix <- splitix[sapply(splitix, length) > 0]
   # mcres <- parallel::mclapply(splitix, function(x, pairs, expr, method) {
@@ -45,7 +45,7 @@ function (eset, topvar.genes=1000, dupl.cor=0.99, method=c("pearson", "spearman"
   # }, y=pairs, gid), recursive=FALSE)
   
   ## more efficient but still slow approach
-  # splitix <- parallel::splitIndices(nx=length(sampleNames(eset)), ncl=nthread)
+  # splitix <- parallel::splitIndices(nx=length(Biobase::sampleNames(eset)), ncl=nthread)
   # splitix <- splitix[sapply(splitix, length) > 0]
   # mcres <- parallel::mclapply(splitix, function(splitix, expr, method) {
   #     cores <- cor(x=expr[ , splitix, drop=FALSE], y=expr, method=method, use="pairwise.complete.obs")

@@ -95,8 +95,10 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
     }, expr=expr, gentrez=gentrez, gsymb=gsymb, sbts=sbts, sbtu=sbtu)
   }, gid=gid, expr=Biobase::exprs(eset)[gid, , drop=FALSE], gentrez=gentrez, gsymb=gsymb, sbts=sbts, sbtu=sbtu)
   pp <- do.call(c, mcres)
-  nn <- sapply(pp, function (x) { return (x$symbol) })
-  nn[is.na(nn)] <- paste("ENTREZID", sapply(pp, function (x) { return (x$symbol) })[is.na(nn)], sep=".")
+  gsymb <- sapply(pp, function (x) { return (x$symbol) })
+  gentrez <- sapply(pp, function (x) { return (x$entrez) })
+  nn <- gsymb
+  nn[is.na(nn)] <- paste("ENTREZID", gentrez[is.na(nn)], sep=".")
   names(pp) <- nn
   
   if (plot) {
@@ -129,8 +131,8 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
     return (res)
   }, sbts=sbts, sbtu=sbtu))
   colnames(med) <- paste("median.expression", sbtu, sep=".")
-  dd <- data.frame("Kruskal.Wallis.pvalue"=dd, "Kruskal.Wallis.fdr"=p.adjust(dd, method="fdr"), Biobase::fData(eset)[match(gid, Biobase::fData(eset)[ , "ENTREZID"]), ], med, stringsAsFactors=FALSE)
-  WriteXLS::WriteXLS(x="dd", ExcelFileName=file.path(resdir, "subtype_association_kruskal.xls"), AdjWidth=FALSE, BoldHeaderRow=TRUE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
+  dd <- data.frame("Kruskal.Wallis.pvalue"=dd, "Kruskal.Wallis.fdr"=p.adjust(dd, method="fdr"), Biobase::fData(eset)[gid, , drop=FALSE], med, stringsAsFactors=FALSE)
+  WriteXLS::WriteXLS(x="dd", SheetNames="Kruska-Wallis", ExcelFileName=file.path(resdir, "subtype_association_kruskal.xls"), AdjWidth=FALSE, BoldHeaderRow=TRUE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
   ## wilcoxon p-values
   dd <- lapply(pp, function (x) { return (data.frame(x$wilcoxon.pvalue)) })
   if (condensed) {

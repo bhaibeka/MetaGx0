@@ -27,7 +27,7 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   }
   
   if (missing(geneid)) {
-    gened <- Biobase::fData(eset)[ , "ENTREZID"]
+    geneid <- Biobase::fData(eset)[ , "ENTREZID"]
   }
   
   if (!file.exists(file.path(resdir))) { dir.create(file.path(resdir), showWarnings=FALSE, recursive=TRUE) }
@@ -55,14 +55,15 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   
   ## extract genes
   gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
-  gsymb <- Biobase::fData(eset)[gid, "SYMBOL"]
-  names(gsymb) <- gid
   if (length(gid) == 0) {
     stop("Genes not in the expressionSet object")
   }
   if (length(gid) < length(geneid)) {
     warning(sprintf("%i/%i genes were present in the expressionSet object", length(gid), length(geneid)))
   }
+  glabel <- Biobase::fData(eset)[gid, "SYMBOL"]
+  glabel[is.na(glabel)] <- paste("ENTREZID", Biobase::fData(eset)[gid, "ENTREZID"][is.na(glabel)], sep=".")
+  names(glabel) <- gid
   expr <- Biobase::exprs(eset)[gid, , drop=FALSE]
     
   ## compute subtype-specific pairwise correlation across query genes
@@ -102,15 +103,19 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   }, expr=expr, method=method), recursive=FALSE)
   mRMRe::set.thread.count(nn)
   
-  dd <- lapply(rr, data.frame)
+  dd <- lapply(rr, function (x, glabel) {
+    dd <- data.frame(x)
+    dimnames(dd) <- list(glabel[rownames(x)], glabel[colnames(x)])
+    return (dd)
+  }, glabel=glabel)
   if (condensed) {
     WriteXLS::WriteXLS(x="dd", ExcelFileName=file.path(resdir, sprintf("subtype_correlation_%s.xls", method)), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
   } else {
     mapply(function(x, y, method, resdir) {
-       WriteXLS::WriteXLS("x", ExcelFileName=file.path(resdir, sprintf("subtype_association_%s_%s.xls", method, y)), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
+       WriteXLS::WriteXLS("x", ExcelFileName=file.path(resdir, sprintf("subtype_correlation_%s_%s.xls", method, y)), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
      }, x=dd, y=names(dd), method=method, resdir=resdir)
   }
-  return(rr)
+  return (rr)
 }
 
 
