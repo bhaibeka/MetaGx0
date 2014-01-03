@@ -100,8 +100,7 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman"), weighted=TRU
     rr[y] <- x
     rr[y[ , 2:1]] <- x
     diag(rr) <- 1
-    
-    return(list(rr))
+    return (list(rr))
   }, y=pairs, gid), recursive=FALSE)
   
   dd <- lapply(rr, data.frame)

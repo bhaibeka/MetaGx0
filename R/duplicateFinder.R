@@ -11,13 +11,13 @@ function (eset, topvar.genes=1000, dupl.cor=0.99, method=c("pearson", "spearman"
   #
   # Arga:
   #   eset: an expressionSet object
-  #   var.genes: number of most variant genes used to define the expression profiles
+  #   topvar.genes: number of most variant genes used to define the expression profiles
   #
   # Returns
   #   list of duplicates sample names
   
   method <- match.arg(method)
-  if (var.genes < 3) { var.genes <- length(featureNames(eset)) }
+  if (topvar.genes < 3) { topvar.genes <- length(featureNames(eset)) }
   ## select the most variant genes
   ## at least in 80% of the datasets
   iix <- apply(exprs(eset), 1, function (x, y) {

@@ -236,7 +236,7 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
   eset.merged <- datasetMerging(esets=eset.all,  method=merging.method, standardization=merging.std, nthread=nthread)
 
   ## identify potential duplicated samples
-  duplicates <- duplicateFinder(eset=eset.merged, var.genes=topvar.genes, dupl.cor=duplicates.cor)
+  duplicates <- duplicateFinder(eset=eset.merged, topvar.genes=topvar.genes, dupl.cor=duplicates.cor)
   ## annotate the separate esets and the merged eset
   tt <- sapply(duplicates, paste, collapse="///")
   ## merged eset
