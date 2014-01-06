@@ -41,7 +41,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
   
   switch (method,
     "jetset" = {
-      js <- jetset.bhk::jscores(chip=params, probeset=rownames(Biobase::exprs(eset)))
+      js <- jetset::jscores(chip=params, probeset=rownames(Biobase::exprs(eset)))
       js <- js[rownames(Biobase::exprs(eset)), , drop=FALSE]
       ## identify the best probeset for each Entrez Gene ID
       geneid1 <- stripWhiteSpace(as.character(js[ ,"EntrezID"]))
