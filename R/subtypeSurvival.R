@@ -99,20 +99,29 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
   ## concordance index
   splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, sbts.proba) {    
-    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, sbts.proba) {
-      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat) {
-        return (unlist(concIndex(x=xx, stime=stime, sevent=sevent, strat=strat, weights=w, alternative="two.sided")))
-      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat))
+  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, tau, sbts.proba) {
+    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, tau, sbts.proba) {
+      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat, tau) {
+        return (unlist(concIndex(x=xx, stime=stime, sevent=sevent, strat=strat, tau=tau, weights=w, alternative="two.sided")))
+      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat, tau=tau))
       return (res)
-    }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
-  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
+    }, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=tau, sbts.proba=sbts.proba)
+  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=time.cens, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
   names(rr) <- glabel
   ## save results
   dd <- lapply(rr, data.frame)
   if (condensed) {
-    WriteXLS::WriteXLS(x="dd", ExcelFileName=file.path(resdir, sprintf("subtype_cindex.xls")), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
+    WriteXLS::WriteXLS(x="dd", ExcelFileName=file.path(resdir, sprintf("subtype_gene_cindex.xls")), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
+    ## per subtype
+    dd2 <- lapply(sbtu, function (x, y) {
+      res <- t(sapply(y, function (y, x) {
+        return (y[x, ])
+      }, x=x))
+      return (data.frame(res))
+    }, y=rr)
+    names(dd2) <- sbtu
+    WriteXLS::WriteXLS(x="dd2", ExcelFileName=file.path(resdir, sprintf("subtype_dindex.xls")), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
   } else {
     mapply(function(x, y, method, resdir) {
        WriteXLS::WriteXLS("x", ExcelFileName=file.path(resdir, sprintf("subtype_cindex_%s.xls", y)), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
@@ -123,14 +132,14 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
   ## D index (hazard ratio)
   splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, sbts.proba) {    
-    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, sbts.proba) {
-      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat) {
-         return (unlist(dIndex(x=xx, stime=stime, sevent=sevent, strat=strat, weights=w, alternative="two.sided")))
-      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat))
+  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, tau, sbts.proba) {    
+    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, tau, sbts.proba) {
+      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat, tau) {
+         return (unlist(dIndex(x=xx, stime=stime, sevent=sevent, strat=strat, tau=tau, weights=w, alternative="two.sided")))
+      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat, tau=tau))
       return (res)
-    }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
-  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
+    }, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=tau, sbts.proba=sbts.proba)
+  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=time.cens, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
   names(rr) <- glabel
   ## save results
@@ -154,6 +163,7 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
   dindices <- rr
   
   ## kaplan-meier survival curves
+  ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=time.cens)  
   if (plot) {
     figsize <- 6
     nc <- 3
@@ -170,7 +180,7 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
         survcomp::km.coxph.plot(formula.s=Surv(stime, sevent) ~ risk, data.s=dd, weight.s=w, sub.s="all", x.label="time (years)", y.label="probability of disease-free survival", main.title=sprintf("%s\n%s", glabel[x], colnames(sbts.proba)[i]), leg.text=paste(c("Low", "Intermediate", "High"), "     ", sep=""), leg.pos="topright", leg.inset=0, .col=c("darkblue", "darkgreen", "darkred"), .lty=c(1,1,1), show.n.risk=TRUE, n.risk.step=2, n.risk.cex=0.85, bty="n", leg.bty="n", verbose=FALSE)
       }     
       if (!condensed) { dev.off() }
-    }, expr=expr, stime=stime, sevent=sevent, strat=strat, condensed=condensed, sbts.proba=sbts.proba, glabel=glabel, subtype.col=subtype.col, resdir=resdir, nc=nc, nr=nr)
+    }, expr=expr, stime=ss[[1]], sevent=ss[[2]], strat=strat, condensed=condensed, sbts.proba=sbts.proba, glabel=glabel, subtype.col=subtype.col, resdir=resdir, nc=nc, nr=nr)
     if (condensed) { dev.off() }
   }
 

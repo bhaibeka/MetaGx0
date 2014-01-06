@@ -25,7 +25,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
     c("GPL8300", "jetset", "hgu95av2"),
     c("GPL96", "jetset", "hgu133a"),
     c("GPL3921", "jetset", "hgu133a"),
-    c("GPL97", "jetset", "hgu133b"),
+    c("GPL97", "jetset", "hgu133plus2"),
     c("GPL570", "jetset", "hgu133plus2"),
     c("GPL1352", "jetset", "u133x3p"))
   dimnames(platf.map) <- list(platf.map[ , 1], c("platform", "method", "parameters"))
