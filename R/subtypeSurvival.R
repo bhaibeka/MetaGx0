@@ -74,23 +74,20 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
   
   ## for a single expressionSet object
   ## extract subtypes
-  sbts <- Biobase::pData(eset)[ , "subtype"]
-  names(sbts) <- rownames(Biobase::pData(eset))
-  sbtu <- levels(sbts)
+  sbts <- getSubtype(eset=eset, method="class")
   if (sum(table(sbts) > 3) < 2) {
     warning("Not enough tumors in each subtype")
     return(NULL)
   }
-  sbts.proba <- Biobase::pData(eset)[ , sprintf("subtyproba.%s", sbtu), drop=FALSE]
   if (!weighted) {
-    sbts.proba <- t(apply(sbts.proba, 1, function (x) {
-      xx <- array(0, dim=length(x))
-      xx[which.max(x)] <- 1
-      return (xx)
-    }))
+    sbts.proba <- getSubtype(eset=eset, method="crisp")
+  } else {
+    sbts.proba <- getSubtype(eset=eset, method="fuzzy")  
   }
-  sbts.proba <- cbind(1, sbts.proba)
-  colnames(sbts.proba) <- c("ALL", sbtu)
+  sbts.proba <- cbind("ALL"=1, sbts.proba)
+  sbts.crisp <- getSubtype(eset=eset, method="crisp")
+  sbts.crisp <- cbind("ALL"=1, sbts.crisp)
+  sbtu <- colnames(sbts.proba)
   
   ## extract genes
   gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
@@ -103,24 +100,29 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
   glabel <- Biobase::fData(eset)[gid, "SYMBOL"]
   glabel[is.na(glabel)] <- paste("ENTREZID", Biobase::fData(eset)[gid, "ENTREZID"][is.na(glabel)], sep=".")
   names(glabel) <- gid
+  ## extract genomic data
   expr <- Biobase::exprs(eset)[gid, , drop=FALSE]
+  ## extract survival data
   stime <- Biobase::pData(eset)[ , "t.dfs"] / 365
   time.cens <- time.cens / 365
   sevent <- Biobase::pData(eset)[ , "e.dfs"]
+  ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=time.cens)  
+  stime <- ss[[1]]
+  sevent <- ss[[2]]
   ## strata
   strat <- as.factor(Biobase::pData(eset)[ , "dataset"])
   
   ## concordance index
   splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, tau, sbts.proba) {
-    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, tau, sbts.proba) {
-      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat, tau) {
-        return (unlist(concIndex(x=xx, stime=stime, sevent=sevent, strat=strat, tau=tau, weights=w, alternative="two.sided")))
-      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat, tau=tau))
+  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, sbts.proba) {
+    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, sbts.proba) {
+      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat) {
+        return (unlist(concIndex(x=xx, stime=stime, sevent=sevent, strat=strat, weights=w, alternative="two.sided")))
+      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat))
       return (res)
-    }, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=tau, sbts.proba=sbts.proba)
-  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=time.cens, sbts.proba=sbts.proba)
+    }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
+  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
   names(rr) <- glabel
   ## save results
@@ -146,14 +148,14 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
   ## D index (hazard ratio)
   splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, tau, sbts.proba) {    
-    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, tau, sbts.proba) {
-      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat, tau) {
-         return (unlist(dIndex(x=xx, stime=stime, sevent=sevent, strat=strat, tau=tau, weights=w, alternative="two.sided")))
-      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat, tau=tau))
+  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, sbts.proba) {
+    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, sbts.proba) {
+      res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat) {
+         return (unlist(dIndex(x=xx, stime=stime, sevent=sevent, strat=strat, weights=w, alternative="two.sided")))
+      }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat))
       return (res)
-    }, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=tau, sbts.proba=sbts.proba)
-  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, tau=time.cens, sbts.proba=sbts.proba)
+    }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
+  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
   names(rr) <- glabel
   ## save results
@@ -177,30 +179,30 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
   dindices <- rr
   
   ## kaplan-meier survival curves
-  ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=time.cens)  
   if (plot) {
     figsize <- 6
     nc <- 3
     nr <- ceiling(ncol(sbts.proba) / nc)
     if (condensed) { pdf(file.path(resdir, "subtype_surv_curves.pdf"), height=nr * figsize, width=nc * figsize) }
-    lapply(gid, function (x, expr, stime, sevent, strat, condensed, sbts.proba, glabel, subtype.col, resdir, nc, nr) {
+    lapply(gid, function (x, expr, stime, sevent, strat, condensed, sbts.proba, sbts.crisp, glabel, subtype.col, resdir, nc, nr) {
       if (!condensed) { pdf(file.path(resdir, sprintf("subtype_surv_curves_%s.pdf", x$symbol)), height=nr * figsize, width=nc * figsize) }
       par(mfrow=c(nr, nc))
-      cc <- quantile(expr[x, ], probs=c(0, 0.33, 0.66, 1), na.rm=TRUE)
-      xx <- factor(cut(x=expr[x, ], breaks=cc, labels=FALSE))
-      xx2 <- (as.numeric(xx) - 1) / length(levels(xx))
       for (i in 1:ncol(sbts.proba)) {
         w <- sbts.proba[ , i]
+        ## discretize scores
+        cc <- quantile(expr[x, !is.na(sbts.crisp[ , i]) & sbts.crisp[ , i] == 1], probs=c(0, 0.33, 0.66, 1), na.rm=TRUE)
+        xx <- factor(cut(x=expr[x, ], breaks=cc, labels=FALSE))
+        xx2 <- (as.numeric(xx) - 1) / length(levels(xx))
         dd <- data.frame("stime"=stime, "sevent"=sevent, "risk"=xx, "score"=xx2, "weights"=w, "strat"=strat, stringsAsFactors=FALSE)
         ## weights should be > 0
         dd <- dd[!is.na(dd) & dd$weights > 0, , drop=FALSE]
         statn.risk <- summary(survival::coxph(formula=Surv(stime, sevent) ~ risk + strata(strat) , data=dd, weights=dd$weights))
         statn.score <- summary(survival::coxph(formula=Surv(stime, sevent) ~ score + strata(strat) , data=dd, weights=dd$weights))
         statn <- sprintf("Logrank P = %.1E\nHR = %.2g [%.2g,%2.g], P = %.1E", statn.risk$sctest["pvalue"], statn.score$conf.int[1], statn.score$conf.int[3], statn.score$conf.int[4], statn.score$coefficients[ , 5])
-        survcomp::km.coxph.plot(formula.s=Surv(stime, sevent) ~ risk, data.s=dd, weight.s=dd$weights, sub.s="all", x.label="time (years)", y.label="probability of disease-free survival", main.title=sprintf("%s\n%s", glabel[x], colnames(sbts.proba)[i]), leg.text=paste(c("Low", "Intermediate", "High"), "     ", sep=""), leg.pos="topright", leg.inset=0, .col=c("darkblue", "darkgreen", "darkred"), .lty=c(1,1,1), show.n.risk=TRUE, n.risk.step=2, n.risk.cex=0.85, bty="n", leg.bty="n", o.text=statn, verbose=FALSE)
+        survcomp::km.coxph.plot(formula.s=Surv(stime, sevent) ~ risk, data.s=dd, weight.s=dd$weights, x.label="time (years)", y.label="probability of disease-free survival", main.title=sprintf("%s\n%s", glabel[x], colnames(sbts.proba)[i]), leg.text=paste(c("Low", "Intermediate", "High"), "     ", sep=""), leg.pos="topright", leg.inset=0, .col=c("darkblue", "darkgreen", "darkred"), .lty=c(1,1,1), show.n.risk=TRUE, n.risk.step=2, n.risk.cex=0.85, bty="n", leg.bty="n", o.text=statn, verbose=FALSE)
       }     
       if (!condensed) { dev.off() }
-    }, expr=expr, stime=ss[[1]], sevent=ss[[2]], strat=strat, condensed=condensed, sbts.proba=sbts.proba, glabel=glabel, subtype.col=subtype.col, resdir=resdir, nc=nc, nr=nr)
+    }, expr=expr, stime=stime, sevent=sevent, strat=strat, condensed=condensed, sbts.proba=sbts.proba, sbts.crisp, glabel=glabel, subtype.col=subtype.col, resdir=resdir, nc=nc, nr=nr)
     if (condensed) { dev.off() }
   }
 
