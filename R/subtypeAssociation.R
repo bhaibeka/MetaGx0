@@ -30,18 +30,20 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
   if (!file.exists(file.path(resdir))) { dir.create(file.path(resdir), showWarnings=FALSE, recursive=TRUE) }
       
   ## for a single expressionSet object
-  
   ## extract subtypes
-  sbts <- Biobase::pData(eset)[ , "subtype"]
-  names(sbts) <- rownames(Biobase::pData(eset))
-  sbts.proba <- sapply(names(sbts), function (x, y, z) {
-    return (z[x, sprintf("subtyproba.%s", y[x])])
-  }, y=sbts, z=Biobase::pData(eset))
+  sbts <- getSubtype(eset=eset, method="class")
+  sbtu <- levels(sbts)
   if (sum(table(sbts) > 3) < 2) {
     warning("Not enough tumors in each subtype")
     return(NULL)
   }
-  sbtu <- levels(sbts)
+  if (!weighted) {
+    weights <- array(1, dim=length(sbts), dimnames=names(sbts))
+  } else {
+    weights <- getSubtype(eset=eset, method="fuzzy")
+    stop("Weighted association analysis is not implemented yet")
+    ## use the kruskal_tes and wilcox_test function in library coin
+  }
   if (missing(subtype.col)) {
     subtype.col <- rainbow(length(sbtu), alpha=0.6)
   } else {
@@ -49,14 +51,7 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
       stop(sprintf("Not enough color for %i subtypes", length(sbtu)))
     }  
   }
-  if (!weighted) {
-    weights <- array(1, dim=length(sbts), dimnames=names(sbts))
-  } else {
-    weights <- sbts.proba
-    stop("Weighted association analysis is not implemented yet")
-    ## use the kruskal_tes and wilcox_test function in library coin
-  }
-  
+
   ## extract genes
   gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
   gsymb <- Biobase::fData(eset)[gid, "SYMBOL"]

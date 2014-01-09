@@ -13,6 +13,7 @@ function (eset, method=c("class", "crisp", "fuzzy")) {
   if (class(eset) != "ExpressionSet") {
     stop("eset should be an expressionSet object")
   }
+  if (length(Biobase::experimentData(eset)@other) == 0) { return (NULL) }
   switch(method,
     "class" = {
       res <- Biobase::experimentData(eset)@other$class

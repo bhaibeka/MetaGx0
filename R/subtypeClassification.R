@@ -107,7 +107,6 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
   }
   
   ## merge clinical information and subtype classification
-  colnames(sbts$subtype.proba) <- paste("subtyproba", colnames(sbts$subtype.proba), sep=".")
   eset <- setSubtype(eset=eset, subtype.class=sbts$subtype, subtype.crisp=sbts$subtype.crisp, subtype.fuzzy=sbts$subtype.proba)
   return (eset)
 }

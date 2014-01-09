@@ -266,11 +266,19 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
     keepix <- setdiff(Biobase::sampleNames(eset.merged), rmix)
     Biobase::exprs(eset.merged) <- Biobase::exprs(eset.merged)[ , keepix, drop=FALSE]
     Biobase::pData(eset.merged) <- Biobase::pData(eset.merged)[keepix, , drop=FALSE]
+    sclass <- getSubtype(eset=eset.merged, method="class")[keepix]
+    sfuzzy <- getSubtype(eset=eset.merged, method="fuzzy")[keepix, , drop=FALSE]
+    scrisp <- getSubtype(eset=eset.merged, method="crisp")[keepix, , drop=FALSE]
+    eset.merged <- setSubtype(eset=eset.merged, subtype.class=sclass, subtype.fuzzy=sfuzzy, subtype.crisp=scrisp)
     ## individual esets
     eset.all <- lapply(eset.all, function (x, y) {
       keepix <- setdiff(Biobase::sampleNames(x), y)
       Biobase::exprs(x) <- Biobase::exprs(x)[ , keepix, drop=FALSE]
       Biobase::pData(x) <- Biobase::pData(x)[keepix, , drop=FALSE]
+      sclass <- getSubtype(eset=x, method="class")[keepix]
+      sfuzzy <- getSubtype(eset=x, method="fuzzy")[keepix, , drop=FALSE]
+      scrisp <- getSubtype(eset=x, method="crisp")[keepix, , drop=FALSE]
+      eset.merged <- setSubtype(eset=x, subtype.class=sclass, subtype.fuzzy=sfuzzy, subtype.crisp=scrisp)
       return(x)
     }, y=rmix)
   }

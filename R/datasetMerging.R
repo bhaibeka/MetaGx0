@@ -65,7 +65,20 @@ function (esets, method=c("union", "intersect"), standardization=c("quantile", "
   eset.merged <- ExpressionSet(assayData=exprs.merged, phenoData=AnnotatedDataFrame(data=clinicinfo.merged), featureData=AnnotatedDataFrame(data=feature.merged))
   experimentData(eset.merged)@preprocessing <- list("normalization"="mixed", package="unspecified", version="0")
   annotation(eset.merged) <- "mixed"
-  
+  ## subtyping
+  sn <- lapply(esets, function (x) {
+    return (colnames(getSubtype(eset=x, method="fuzzy")))
+  })
+  if (!all(sapply(sn, is.null))) {
+    sn <- table(unlist(sn))
+    if (!all(sn == length(esets))) { stop("Different subtyping across esets") }
+    sn <- names(sn)
+    sclass <- unlist(lapply(esets, getSubtype, method="class"))
+    sfuzzy <- do.call(rbind, lapply(esets, getSubtype, method="fuzzy"))
+    scrisp <- do.call(rbind, lapply(esets, getSubtype, method="crisp"))
+    eset.merged <- setSubtype(eset=eset.merged, subtype.class=sclass, subtype.fuzzy=sfuzzy, subtype.crisp=scrisp)
+  }
+    
   ## standardization
   switch(standardization,
     "none" = {

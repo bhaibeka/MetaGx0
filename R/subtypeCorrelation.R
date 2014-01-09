@@ -35,23 +35,22 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   ## for a single expressionSet object
   
   ## extract subtypes
-  sbts <- Biobase::pData(eset)[ , "subtype"]
-  names(sbts) <- rownames(Biobase::pData(eset))
-  sbtu <- levels(sbts)
+  ## for a single expressionSet object
+  ## extract subtypes
+  sbts <- getSubtype(eset=eset, method="class")
   if (sum(table(sbts) > 3) < 2) {
     warning("Not enough tumors in each subtype")
     return(NULL)
   }
-  sbts.proba <- Biobase::pData(eset)[ , sprintf("subtyproba.%s", sbtu), drop=FALSE]
   if (!weighted) {
-    sbts.proba <- t(apply(sbts.proba, 1, function (x) {
-      xx <- array(0, dim=length(x))
-      xx[which.max(x)] <- 1
-      return (xx)
-    }))
+    sbts.proba <- getSubtype(eset=eset, method="crisp")
+  } else {
+    sbts.proba <- getSubtype(eset=eset, method="fuzzy")  
   }
-  sbts.proba <- cbind(1, sbts.proba)
-  colnames(sbts.proba) <- c("ALL", sbtu)
+  sbts.proba <- cbind("ALL"=1, sbts.proba)
+  sbts.crisp <- getSubtype(eset=eset, method="crisp")
+  sbts.crisp <- cbind("ALL"=1, sbts.crisp)
+  sbtu <- colnames(sbts.proba)
   
   ## extract genes
   gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
