@@ -6,7 +6,7 @@
 
 
 `subtypeSurvival` <- 
-function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, resdir="cache", nthread=1) {
+function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, resdir="cache", nthread=1) {
 
   ######################
   
@@ -23,10 +23,12 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
     # rr <-  mRMRe::correlate(X=x, Y=Surv(stime, sevent), method="cindex", strata=strat, weights=weights)
     dd <- data.frame("stime"=stime, "sevent"=sevent, "x"=x, "weights"=weights, "strat"=strat, stringsAsFactors=FALSE)
     ## weights should be > 0
-    dd <- dd[!is.na(dd) & dd$weights > 0, , drop=FALSE]
-    rr <- summary(survival::coxph(Surv(stime, sevent) ~ strata(strat) + x, data=dd, weights=dd$weights))$concordance
-    cindex <- rr[1]
-    se <- rr[2]
+    dd <- dd[!is.na(dd$weights) & dd$weights > 0, , drop=FALSE]
+    rr <- summary(survival::coxph(Surv(stime, sevent) ~ strata(strat) + x, data=dd, weights=dd$weights))
+    cindex <- abs(rr$concordance[1] - 0.5)
+    if (rr$coefficients["x", 1] < 0) { cindex <- - cindex }
+    cindex <- 0.5 + cindex
+    se <- rr$concordance[2]
     ci <- qnorm(p=alpha / 2, lower.tail=FALSE) * se
     lower <- cindex - ci
     upper <- cindex + ci
@@ -195,7 +197,7 @@ function (eset, geneid, plot=TRUE, weighted=TRUE, time.cens, condensed=TRUE, res
         xx2 <- (as.numeric(xx) - 1) / length(levels(xx))
         dd <- data.frame("stime"=stime, "sevent"=sevent, "risk"=xx, "score"=xx2, "weights"=w, "strat"=strat, stringsAsFactors=FALSE)
         ## weights should be > 0
-        dd <- dd[!is.na(dd) & dd$weights > 0, , drop=FALSE]
+        dd <- dd[!is.na(dd$weights) & dd$weights > 0, , drop=FALSE]
         statn.risk <- summary(survival::coxph(formula=Surv(stime, sevent) ~ risk + strata(strat) , data=dd, weights=dd$weights))
         statn.score <- summary(survival::coxph(formula=Surv(stime, sevent) ~ score + strata(strat) , data=dd, weights=dd$weights))
         statn <- sprintf("Logrank P = %.1E\nHR = %.2g [%.2g,%2.g], P = %.1E", statn.risk$sctest["pvalue"], statn.score$conf.int[1], statn.score$conf.int[3], statn.score$conf.int[4], statn.score$coefficients[ , 5])
