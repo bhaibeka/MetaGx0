@@ -6,7 +6,7 @@
 
 
 `stripWhiteSpace` <-
-function(str, method=c("both", "head", "tail")) {
+function (str, method=c("both", "head", "tail")) {
   method <- match.arg(method)
   str2 <- NULL
   if (length(str) == 1) {
