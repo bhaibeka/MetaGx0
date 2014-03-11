@@ -17,7 +17,7 @@
 ## Notes:	duration is not taken into account as only 4 perturbations lasted 12h, the other 6096 lasted 6h
 #################################################
 
-`gsea.prerank` <- 
+`prerankGSEA` <- 
 function (exe.path, gmt.path, rank.path, chip.path, gsea.collapse=FALSE, nperm=1000, scoring.scheme=c("weighted", "weighted_p2", "weighted_p1.5", "classic"), make.sets=TRUE, include.only.symbols=FALSE, plot.top.x=20, set.max=500, set.min=15, zip.report=FALSE, gsea.report, gsea.out, replace.res=FALSE, gsea.seed=987654321) {
 	exe.path <- path.expand(exe.path)
 	gmt.path <- path.expand(gmt.path)
