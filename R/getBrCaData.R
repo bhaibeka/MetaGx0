@@ -68,9 +68,9 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
     dataset.fn <- file.path(resdir, "processed", sprintf("%s_processed.RData", ddn))
     if (!file.exists(dataset.fn)) {
       ## get dataset
-      # inSilicoDb2::getCurationInfo(dataset=as.character(datasets[i, "Dataset.ID"]))
-      platf <- inSilicoDb2::getPlatforms(dataset=ddn)
-      esets <- inSilicoDb2::getDatasets(dataset=ddn, norm=stripWhiteSpace(as.character(datasets[i, "Normalization"])), curation=datasets[i, "Curation.ID"], features="PROBE")
+      # InSilicoDb::getCurationInfo(dataset=as.character(datasets[i, "Dataset.ID"]))
+      platf <- InSilicoDb::getPlatforms(dataset=ddn)
+      esets <- InSilicoDb::getDatasets(dataset=ddn, norm=stripWhiteSpace(as.character(datasets[i, "Normalization"])), curation=datasets[i, "Curation.ID"], features="PROBE")
       if (is.null(unlist(esets))) {
         stop("Rerun the script when data are ready to download from InSilicoDB")
       }

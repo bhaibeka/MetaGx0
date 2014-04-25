@@ -93,8 +93,8 @@ function (sbt.model = c("scmgene", "scmod2", "scmod1", "pam50",
         dataset.fn <- file.path(resdir, "processed", sprintf("\%s_processed.RData", 
             ddn))
         if (!file.exists(dataset.fn)) {
-            platf <- inSilicoDb2::getPlatforms(dataset = ddn)
-            esets <- inSilicoDb2::getDatasets(dataset = ddn, 
+            platf <- InSilicoDb::getPlatforms(dataset = ddn)
+            esets <- InSilicoDb::getDatasets(dataset = ddn, 
                 norm = as.character(datasets[i, "Normalization"]), 
                 curation = datasets[i, "Curation.ID"], features = "PROBE")
             if (is.null(unlist(esets))) {

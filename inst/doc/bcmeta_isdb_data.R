@@ -10,7 +10,7 @@
 ## remove all existing objects from the workspace
 rm(list=ls(all=TRUE))
 
-require(inSilicoDb2)
+require(InSilicoDb)
 require(genefu)
 
 ## this version of jetset allow for simple probe-gene mapping for affymetrix chips hgu95av2 (GPL8300), hgu133a (GPL96), hgu133b (GPL97), hgu133plus2 (GPL570), u133x3p (GPL1352)
