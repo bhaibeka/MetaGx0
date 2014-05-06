@@ -52,7 +52,7 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
   # clinical info
   clin.info <- c("samplename", "id", "series", "dataset", "age", "node", "er", "e.rfs", "e.os", "e.dmfs", "grade", "size", "pgr", "her2", "t.rfs", "t.os", "t.dmfs", "treatment", "tissue")
 
-  ## log in InSilicoDB
+  ## log in inSilicoDb
   InSilicoLogin(login="bhaibeka@gmail.com", password="747779bec8a754b91076d6cc1f700831")
 
   ## clinical information
@@ -68,11 +68,11 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
     dataset.fn <- file.path(resdir, "processed", sprintf("%s_processed.RData", ddn))
     if (!file.exists(dataset.fn)) {
       ## get dataset
-      # InSilicoDb::getCurationInfo(dataset=as.character(datasets[i, "Dataset.ID"]))
-      platf <- InSilicoDb::getPlatforms(dataset=ddn)
-      esets <- InSilicoDb::getDatasets(dataset=ddn, norm=stripWhiteSpace(as.character(datasets[i, "Normalization"])), curation=datasets[i, "Curation.ID"], features="PROBE")
+      # inSilicoDb::getCurationInfo(dataset=as.character(datasets[i, "Dataset.ID"]))
+      platf <- inSilicoDb::getPlatforms(dataset=ddn)
+      esets <- inSilicoDb::getDatasets(dataset=ddn, norm=stripWhiteSpace(as.character(datasets[i, "Normalization"])), curation=datasets[i, "Curation.ID"], features="PROBE")
       if (is.null(unlist(esets))) {
-        stop("Rerun the script when data are ready to download from InSilicoDB")
+        stop("Rerun the script when data are ready to download from inSilicoDb")
       }
       platf <- unlist(platf[!sapply(esets, is.null)])
       esets <- esets[!sapply(esets, is.null)]
@@ -201,7 +201,7 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
     ## eset.all contains a list of gene-centric expression sets
   }
   
-  ## log out from InSilicoDB
+  ## log out from inSilicoDb
   InSilicoLogout()
 
   ## align clinical information
