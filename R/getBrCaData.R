@@ -53,7 +53,7 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
   clin.info <- c("samplename", "id", "series", "dataset", "age", "node", "er", "e.rfs", "e.os", "e.dmfs", "grade", "size", "pgr", "her2", "t.rfs", "t.os", "t.dmfs", "treatment", "tissue")
 
   ## log in inSilicoDb
-  InSilicoLogin(login="bhaibeka@gmail.com", password="747779bec8a754b91076d6cc1f700831")
+  inSilicoDb::InSilicoLogin(login="bhaibeka@gmail.com", password="747779bec8a754b91076d6cc1f700831")
 
   ## clinical information
   cinfo <- clin.info
@@ -202,7 +202,7 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
   }
   
   ## log out from inSilicoDb
-  InSilicoLogout()
+  try(inSilicoDb::InSilicoLogout())
 
   ## align clinical information
   if (verbose) {
