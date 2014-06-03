@@ -6,7 +6,7 @@
 
 
 `subtypeSurvival` <- 
-function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, resdir="cache", nthread=1) {
+function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resdir="cache", nthread=1, sig.method, sig.scaling) {
 
   ######################
   
@@ -64,8 +64,18 @@ function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, re
     stop("Handling list of expressionSet objects is not implemented yet")
   }
   
-  if (missing(geneid)) {
-    geneid <- Biobase::fData(eset)[ , "ENTREZID"]
+  if (missing(sig)) {
+    sig <- as.list(rownames(Biobase::fData(eset)[ , "ENTREZID"]))
+    ## assign gene symbol as signature names
+    gsymb <- Biobase::fData(eset)[ , "SYMBOL"]
+    gsymb[is.na(gsymb)] <- paste("ENTREZID", Biobase::fData(eset)[is.na(gsymb), "ENTREZID"], sep=".")
+    names(sig) <- gsymb
+  }
+  if (!is.list(sig) || (is.list(sig) && is.data.frame(sig))) {
+    sig <- list("SIG"=sig)
+  }
+  if (is.null(names(sig))) {
+    names(sig) <- paste("SIG", 1:length(sig), sep=".")
   }
   
   if (!file.exists(file.path(resdir))) { dir.create(file.path(resdir), showWarnings=FALSE, recursive=TRUE) }
@@ -91,19 +101,16 @@ function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, re
   sbts.crisp <- cbind("ALL"=1, sbts.crisp)
   sbtu <- colnames(sbts.proba)
   
-  ## extract genes
-  gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
-  if (length(gid) == 0) {
-    stop("Genes not in the expressionSet object")
-  }
-  if (length(gid) < length(geneid)) {
-    warning(sprintf("%i/%i genes were present in the expressionSet object", length(gid), length(geneid)))
-  }
-  glabel <- Biobase::fData(eset)[gid, "SYMBOL"]
-  glabel[is.na(glabel)] <- paste("ENTREZID", Biobase::fData(eset)[gid, "ENTREZID"][is.na(glabel)], sep=".")
-  names(glabel) <- gid
   ## extract genomic data
-  expr <- Biobase::exprs(eset)[gid, , drop=FALSE]
+  ## build matrix of signature scores in parallel
+  splitix <- parallel::splitIndices(nx=length(sig), ncl=nthread)
+  splitix <- splitix[sapply(splitix, length) > 0]
+  mcres <- parallel::mclapply(splitix, function(x, sig, eset, sigm, sigs) {
+    res <- sigScore(eset=eset, sig=sig[[x]], method=sigm, scaling=sigs)
+    return (res)
+  }, sig=sig, eset=eset, sigm=sig.method, sigs=sig.scaling)
+  expr <- t(do.call(cbind, mcres))
+  rownames(expr) <- names(sig)
   ## extract survival data
   stime <- Biobase::pData(eset)[ , "t.dfs"] / 365
   time.cens <- time.cens / 365
@@ -115,18 +122,17 @@ function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, re
   strat <- as.factor(Biobase::pData(eset)[ , "dataset"])
   
   ## concordance index
-  splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
+  splitix <- parallel::splitIndices(nx=nrow(expr), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, sbts.proba) {
-    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, sbts.proba) {
+  mcres <- parallel::mclapply(splitix, function(x, expr, stime, sevent, strat, sbts.proba) {
+    ci <- lapply(rownames(expr)[x], function (x, expr, stime, sevent, strat, sbts.proba) {
       res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat) {
         return (unlist(concIndex(x=xx, stime=stime, sevent=sevent, strat=strat, weights=w, alternative="two.sided")))
       }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat))
       return (res)
     }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
-  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
+  }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
-  names(rr) <- glabel
   ## save results
   dd <- lapply(rr, data.frame)
   if (condensed) {
@@ -148,18 +154,17 @@ function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, re
   cindices <- rr
   
   ## D index (hazard ratio)
-  splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
+  splitix <- parallel::splitIndices(nx=rownames(expr), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, gid, expr, stime, sevent, strat, sbts.proba) {
-    ci <- lapply(gid[x], function (x, expr, stime, sevent, strat, sbts.proba) {
+  mcres <- parallel::mclapply(splitix, function(x, expr, stime, sevent, strat, sbts.proba) {
+    ci <- lapply(rownames(expr)[x], function (x, expr, stime, sevent, strat, sbts.proba) {
       res <- t(apply(sbts.proba, 2, function (w, xx, stime, sevent, strat) {
          return (unlist(dIndex(x=xx, stime=stime, sevent=sevent, strat=strat, weights=w, alternative="two.sided")))
       }, xx=expr[x, ], stime=stime, sevent=sevent, strat=strat))
       return (res)
     }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
-  }, gid=gid, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
+  }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
-  names(rr) <- glabel
   ## save results
   dd <- lapply(rr, data.frame)
   if (condensed) {
@@ -186,7 +191,7 @@ function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, re
     nc <- 3
     nr <- ceiling(ncol(sbts.proba) / nc)
     if (condensed) { pdf(file.path(resdir, "subtype_surv_curves.pdf"), height=nr * figsize, width=nc * figsize) }
-    lapply(gid, function (x, expr, stime, sevent, strat, condensed, sbts.proba, sbts.crisp, glabel, subtype.col, resdir, nc, nr) {
+    lapply(rownames(expr), function (x, expr, stime, sevent, strat, condensed, sbts.proba, sbts.crisp, subtype.col, resdir, nc, nr) {
       if (!condensed) { pdf(file.path(resdir, sprintf("subtype_surv_curves_%s.pdf", x$symbol)), height=nr * figsize, width=nc * figsize) }
       par(mfrow=c(nr, nc))
       for (i in 1:ncol(sbts.proba)) {
@@ -201,10 +206,10 @@ function (eset, geneid, plot=FALSE, weighted=TRUE, time.cens, condensed=TRUE, re
         statn.risk <- summary(survival::coxph(formula=Surv(stime, sevent) ~ risk + strata(strat) , data=dd, weights=dd$weights))
         statn.score <- summary(survival::coxph(formula=Surv(stime, sevent) ~ score + strata(strat) , data=dd, weights=dd$weights))
         statn <- sprintf("Logrank P = %.1E\nHR = %.2g [%.2g,%2.g], P = %.1E", statn.risk$sctest["pvalue"], statn.score$conf.int[1], statn.score$conf.int[3], statn.score$conf.int[4], statn.score$coefficients[ , 5])
-        survcomp::km.coxph.plot(formula.s=Surv(stime, sevent) ~ risk, data.s=dd, weight.s=dd$weights, x.label="time (years)", y.label="probability of disease-free survival", main.title=sprintf("%s\n%s", glabel[x], colnames(sbts.proba)[i]), leg.text=paste(c("Low", "Intermediate", "High"), "     ", sep=""), leg.pos="topright", leg.inset=0, .col=c("darkblue", "darkgreen", "darkred"), .lty=c(1,1,1), show.n.risk=TRUE, n.risk.step=2, n.risk.cex=0.85, bty="n", leg.bty="n", o.text=statn, verbose=FALSE)
+        survcomp::km.coxph.plot(formula.s=Surv(stime, sevent) ~ risk, data.s=dd, weight.s=dd$weights, x.label="time (years)", y.label="probability of disease-free survival", main.title=sprintf("%s\n%s", rownames(expr)[x], colnames(sbts.proba)[i]), leg.text=paste(c("Low", "Intermediate", "High"), "     ", sep=""), leg.pos="topright", leg.inset=0, .col=c("darkblue", "darkgreen", "darkred"), .lty=c(1,1,1), show.n.risk=TRUE, n.risk.step=2, n.risk.cex=0.85, bty="n", leg.bty="n", o.text=statn, verbose=FALSE)
       }     
       if (!condensed) { dev.off() }
-    }, expr=expr, stime=stime, sevent=sevent, strat=strat, condensed=condensed, sbts.proba=sbts.proba, sbts.crisp, glabel=glabel, subtype.col=subtype.col, resdir=resdir, nc=nc, nr=nr)
+    }, expr=expr, stime=stime, sevent=sevent, strat=strat, condensed=condensed, sbts.proba=sbts.proba, sbts.crisp, subtype.col=subtype.col, resdir=resdir, nc=nc, nr=nr)
     if (condensed) { dev.off() }
   }
 
