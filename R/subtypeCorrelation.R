@@ -6,7 +6,7 @@
 
 
 `subtypeCorrelation` <- 
-function (eset, sig, plot=TRUE, method=c("pearson", "spearman", "kendall"), weighted=FALSE, condensed=TRUE, plot=TRUE, resdir="cache", nthread=1, sig.method, sig.scaling) {
+function (eset, sig, method=c("pearson", "spearman", "kendall"), weighted=FALSE, condensed=TRUE, plot=TRUE, resdir="cache", nthread=1, sig.method, sig.scaling) {
   ## assess (weighted) correlation between gene expression with respect to subtypes
   #
   # Arga:
@@ -109,41 +109,43 @@ function (eset, sig, plot=TRUE, method=c("pearson", "spearman", "kendall"), weig
   }, expr=expr, method=method), recursive=FALSE)
   mRMRe::set.thread.count(nn)
   
-  if (condensed) {
-    nc <- 3
-    nr <- ceiling(length(rr) / nc)
-    pdf(file.path(resdir, "subtype_correlation.pdf"), width=nc * 5, height=nr * 5)
-    par(mfrow=c(nr, nc), cex=0.8, mar=c(7, 7, 3, 1) + 0.1, xaxt="n", yaxt="n")
-    for (i in 1:length(rr)) {
-      xx <- rr[[i]]
-      image(z=xx, zlim=c(-1, 1), col=blueYellow(256))
-      # axis(1, at=seq(1, nrow(xx), by=1), labels=FALSE)
-      text(x=seq(par("usr")[1] + par("usr")[2] * 0.075, par("usr")[2] - par("usr")[2] * 0.025, length.out=nrow(xx)), y=par("usr")[3] - (par("usr")[4] * 0.025), pos=2, labels=rownames(xx), srt=45, xpd=NA, cex=0.8, font=2)
-      text(x=par("usr")[1], y=seq(par("usr")[3] + par("usr")[4] * 0.05, par("usr")[4] - par("usr")[4] * 0.05, length.out=nrow(xx)), pos=2, labels=rownames(xx), srt=0, xpd=NA, cex=0.8, font=2)
-      if (names(rr)[i] == "Global") {
-        ss <- sprintf("Co-expression for %s population", names(rr)[i])
-      } else {
-        ss <- sprintf("Co-expression for %s subtype", names(rr)[i])
+  if (plot) {
+    if (condensed) {
+      nc <- 3
+      nr <- ceiling(length(rr) / nc)
+      pdf(file.path(resdir, "subtype_correlation.pdf"), width=nc * 5, height=nr * 5)
+      par(mfrow=c(nr, nc), cex=0.8, mar=c(7, 7, 3, 1) + 0.1, xaxt="n", yaxt="n")
+      for (i in 1:length(rr)) {
+        xx <- rr[[i]]
+        image(z=xx, zlim=c(-1, 1), col=blueYellow(256))
+        # axis(1, at=seq(1, nrow(xx), by=1), labels=FALSE)
+        text(x=seq(par("usr")[1] + par("usr")[2] * 0.075, par("usr")[2] - par("usr")[2] * 0.025, length.out=nrow(xx)), y=par("usr")[3] - (par("usr")[4] * 0.025), pos=2, labels=rownames(xx), srt=45, xpd=NA, cex=0.8, font=2)
+        text(x=par("usr")[1], y=seq(par("usr")[3] + par("usr")[4] * 0.05, par("usr")[4] - par("usr")[4] * 0.05, length.out=nrow(xx)), pos=2, labels=rownames(xx), srt=0, xpd=NA, cex=0.8, font=2)
+        if (names(rr)[i] == "Global") {
+          ss <- sprintf("Co-expression for %s population", names(rr)[i])
+        } else {
+          ss <- sprintf("Co-expression for %s subtype", names(rr)[i])
+        }
+        title(main=ss)
       }
-      title(main=ss)
-    }
-    dev.off()
-  } else {
-    for (i in 1:length(rr)) {
-      pdf(file.path(resdir, sprintf("subtype_correlation_%s.pdf", names(rr)[i])), width=5, height=5)
-      par(cex=0.8, mar=c(7, 7, 3, 1) + 0.1, xaxt="n", yaxt="n")
-      xx <- rr[[i]]
-      image(z=xx, zlim=c(-1, 1), col=blueYellow(256))
-      # axis(1, at=seq(1, nrow(xx), by=1), labels=FALSE)
-      text(x=seq(par("usr")[1] + par("usr")[2] * 0.075, par("usr")[2] - par("usr")[2] * 0.025, length.out=nrow(xx)), y=par("usr")[3] - (par("usr")[4] * 0.025), pos=2, labels=rownames(xx), srt=45, xpd=NA, cex=0.8, font=2)
-      text(x=par("usr")[1], y=seq(par("usr")[3] + par("usr")[4] * 0.05, par("usr")[4] - par("usr")[4] * 0.05, length.out=nrow(xx)), pos=2, labels=rownames(xx), srt=0, xpd=NA, cex=0.8, font=2)
-      if (names(rr)[i] == "Global") {
-        ss <- sprintf("Co-expression for %s population", names(rr)[i])
-      } else {
-        ss <- sprintf("Co-expression for %s subtype", names(rr)[i])
-      }
-      title(main=ss)
       dev.off()
+    } else {
+      for (i in 1:length(rr)) {
+        pdf(file.path(resdir, sprintf("subtype_correlation_%s.pdf", names(rr)[i])), width=5, height=5)
+        par(cex=0.8, mar=c(7, 7, 3, 1) + 0.1, xaxt="n", yaxt="n")
+        xx <- rr[[i]]
+        image(z=xx, zlim=c(-1, 1), col=blueYellow(256))
+        # axis(1, at=seq(1, nrow(xx), by=1), labels=FALSE)
+        text(x=seq(par("usr")[1] + par("usr")[2] * 0.075, par("usr")[2] - par("usr")[2] * 0.025, length.out=nrow(xx)), y=par("usr")[3] - (par("usr")[4] * 0.025), pos=2, labels=rownames(xx), srt=45, xpd=NA, cex=0.8, font=2)
+        text(x=par("usr")[1], y=seq(par("usr")[3] + par("usr")[4] * 0.05, par("usr")[4] - par("usr")[4] * 0.05, length.out=nrow(xx)), pos=2, labels=rownames(xx), srt=0, xpd=NA, cex=0.8, font=2)
+        if (names(rr)[i] == "Global") {
+          ss <- sprintf("Co-expression for %s population", names(rr)[i])
+        } else {
+          ss <- sprintf("Co-expression for %s subtype", names(rr)[i])
+        }
+        title(main=ss)
+        dev.off()
+      }
     }
   }
   
