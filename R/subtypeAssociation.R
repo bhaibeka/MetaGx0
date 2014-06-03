@@ -6,12 +6,12 @@
 
 
 `subtypeAssociation` <- 
-function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, resdir="cache", nthread=1) {
+function (eset, sig, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, resdir="cache", nthread=1, ...) {
   ## assess association between gene expression and subtypes
   #
   # Arga:
   #   eset: an expressionSet object
-  #   gene: vector of Entrez Gene IDs. If missing, all genes will be considered.
+  #   sig: signature (vector of gene identifiers and optionnally coefficients; see sigScore) gene or list of signatures for signatures. If missing, all individual genes will be considered.
   #   subtype.col: color for each molecular subtype
   #
   # Returns
@@ -23,16 +23,32 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
     stop("Handling list of expressionSet objects is not implemented yet")
   }
   
-  if (missing(geneid)) {
-    gened <- Biobase::fData(eset)[ , "ENTREZID"]
+  if (missing(sig)) {
+    sig <- as.list(rownames(Biobase::fData(eset)[ , "ENTREZID"]))
+    ## assign gene symbol as signature names
+    gsymb <- Biobase::fData(eset)[ , "SYMBOL"]
+    gsymb[is.na(gsymb)] <- paste("ENTREZID", Biobase::fData(eset)[is.na(gsymb), "ENTREZID"], sep=".")
+    names(sig) <- gsymb
+  }
+  if (!is.list(sig) || (is.list(sig) && is.data.frame(sig))) {
+    sig <- list("SIG"=sig)
+  }
+  if (is.null(names(sig))) {
+    names(sig) <- paste("SIG", 1:length(sig), sep=".")
   }
   
   if (!file.exists(file.path(resdir))) { dir.create(file.path(resdir), showWarnings=FALSE, recursive=TRUE) }
-      
-  ## for a single expressionSet object
+  
   ## extract subtypes
   sbts <- getSubtype(eset=eset, method="class")
   sbtu <- levels(sbts)
+  if (sum(table(sbts) > 3) < 2) {
+    warning("Not enough tumors in each subtype")
+    return(NULL)
+  }
+  
+  ## extract subtypes
+  sbts <- getSubtype(eset=eset, method="class")
   if (sum(table(sbts) > 3) < 2) {
     warning("Not enough tumors in each subtype")
     return(NULL)
@@ -48,33 +64,19 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
     subtype.col <- rainbow(length(sbtu), alpha=0.6)
   } else {
     if (length(subtype.col) < length(sbtu)) {
-      stop(sprintf("Not enough color for %i subtypes", length(sbtu)))
+      stop (sprintf("Not enough color for %i subtypes", length(sbtu)))
     }  
   }
 
-  ## extract genes
-  gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
-  gsymb <- Biobase::fData(eset)[gid, "SYMBOL"]
-  gentrez <- Biobase::fData(eset)[gid, "ENTREZID"]
-  names(gsymb) <- gid
-  if (length(gid) == 0) {
-    stop("Genes not in the expressionSet object")
-  }
-  if (length(gid) < length(geneid)) {
-    warning(sprintf("%i/%i genes were present in the expressionSet object", length(gid), length(geneid)))
-  }
-  
-  if (length(gid) > 100 && condensed) {
+  if (length(sig) > 100 && condensed) {
     warning("Condensed output files are not suitable for large queries (>100 genes)")
   }
   
-  splitix <- parallel::splitIndices(nx=length(gid), ncl=nthread)
+  splitix <- parallel::splitIndices(nx=length(sig), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
-  mcres <- parallel::mclapply(splitix, function(x, gid, expr, gentrez, gsymb, sbts, sbtu) {    
-    pp <- lapply(gid[x], function (x, expr, gentrez, gsymb, sbts, sbtu) {
-      xx <- expr[x, ]
-      gs <- gsymb[x]
-      ge <- gentrez[x]
+  mcres <- parallel::mclapply(splitix, function(x, sig, eset, sbts, sbtu, ...) {    
+    pp <- lapply(sig[x], function (x, eset, sbts, sbtu, ...) {
+      xx <- sigScore(eset=eset, sig=x, ...)
       ## kruskal-wallis test
       kt <- kruskal.test(x=xx, g=sbts)$p.value
       ## pairwise wilcoxon test
@@ -86,15 +88,14 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
       nix <- !is.na(t(wt2))
       wt[colnames(wt2), rownames(wt2)][nix] <- t(wt2)[nix]
       diag(wt) <- 1
-      return (list("kruskal.pvalue"=kt, "wilcoxon.pvalue"=wt, "entrez"=ge, "symbol"=gs, "x"=xx))
-    }, expr=expr, gentrez=gentrez, gsymb=gsymb, sbts=sbts, sbtu=sbtu)
-  }, gid=gid, expr=Biobase::exprs(eset)[gid, , drop=FALSE], gentrez=gentrez, gsymb=gsymb, sbts=sbts, sbtu=sbtu)
+      return (list("kruskal.pvalue"=kt, "wilcoxon.pvalue"=wt, "x"=xx))
+    }, eset=eset, sbts=sbts, sbtu=sbtu, ...)
+  }, sig=sig, eset=eset, sbts=sbts, sbtu=sbtu, ...)
   pp <- do.call(c, mcres)
-  gsymb <- sapply(pp, function (x) { return (x$symbol) })
-  gentrez <- sapply(pp, function (x) { return (x$entrez) })
-  nn <- gsymb
-  nn[is.na(nn)] <- paste("ENTREZID", gentrez[is.na(nn)], sep=".")
-  names(pp) <- nn
+  for (i in 1:length(pp)) {
+    pp[[i]]$name <- names(pp)[i]
+  }
+  # names(pp) <- names(sig)
   
   if (plot) {
     if (condensed) { pdf(file.path(resdir, "subtype_association_boxplot.pdf")) }
@@ -104,7 +105,7 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
       # dd <- c(list(" "=NA), list("  "=NA), dd2)
       mylim <- round(range(x$x, na.rm=TRUE))
       mylim[abs(mylim) < 2] <- c(-2, 2)[abs(mylim) < 2]
-  		mp <- boxplot(x$x ~ sbts, las=3, outline=FALSE, ylim=mylim, main=sprintf("%s", x$symbol), col=subtype.col)
+      mp <- boxplot(x$x ~ sbts, las=3, outline=FALSE, ylim=mylim, main=sprintf("%s", x$name), col=subtype.col)
       axis(1, at=1:length(mp$names), tick=TRUE, labels=TRUE)
       text(x=1:length(mp$names), y=par("usr")[3] - (par("usr")[4] * 0.05), pos=2, labels=mp$names, srt=45, xpd=NA, font=2, col=c("black"))
       text(x=1:length(mp$names), y=par("usr")[3], pos=3, labels=sprintf("n=%i", table(sbts)[mp$names]), col=c("black"))
@@ -126,7 +127,7 @@ function (eset, geneid, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, 
     return (res)
   }, sbts=sbts, sbtu=sbtu))
   colnames(med) <- paste("median.expression", sbtu, sep=".")
-  dd <- data.frame("Kruskal.Wallis.pvalue"=dd, "Kruskal.Wallis.fdr"=p.adjust(dd, method="fdr"), Biobase::fData(eset)[gid, , drop=FALSE], med, stringsAsFactors=FALSE)
+  dd <- data.frame("Kruskal.Wallis.pvalue"=dd, "Kruskal.Wallis.fdr"=p.adjust(dd, method="fdr"), med, stringsAsFactors=FALSE)
   WriteXLS::WriteXLS(x="dd", SheetNames="Kruska-Wallis", ExcelFileName=file.path(resdir, "subtype_association_kruskal.xls"), AdjWidth=FALSE, BoldHeaderRow=TRUE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
   ## wilcoxon p-values
   dd <- lapply(pp, function (x) { return (data.frame(x$wilcoxon.pvalue)) })

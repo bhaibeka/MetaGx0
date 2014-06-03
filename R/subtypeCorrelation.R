@@ -6,7 +6,7 @@
 
 
 `subtypeCorrelation` <- 
-function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), weighted=TRUE, condensed=TRUE, resdir="cache", nthread=1) {
+function (eset, sig, plot=TRUE, method=c("pearson", "spearman", "kendall"), weighted=TRUE, condensed=TRUE, resdir="cache", nthread=1, ...) {
   ## assess (weighted) correlation between gene expression with respect to subtypes
   #
   # Arga:
@@ -16,6 +16,7 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   #   method: method for correlation
   #   resdir
   #   nthread:
+  #   ...: parameters to be passed to sigScore
   #
   # Returns
   #   list containing p-values for comparisons
@@ -26,16 +27,24 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
     stop("Handling list of expressionSet objects is not implemented yet")
   }
   
-  if (missing(geneid)) {
-    geneid <- Biobase::fData(eset)[ , "ENTREZID"]
+  if (missing(sig)) {
+    sig <- as.list(rownames(Biobase::fData(eset)[ , "ENTREZID"]))
+    ## assign gene symbol as signature names
+    gsymb <- Biobase::fData(eset)[ , "SYMBOL"]
+    gsymb[is.na(gsymb)] <- paste("ENTREZID", Biobase::fData(eset)[is.na(gsymb), "ENTREZID"], sep=".")
+    names(sig) <- gsymb
+  }
+  if (!is.list(sig) || (is.list(sig) && is.data.frame(sig))) {
+    sig <- list("SIG"=sig)
+  }
+  if (is.null(names(sig))) {
+    names(sig) <- paste("SIG", 1:length(sig), sep=".")
   }
   
   if (!file.exists(file.path(resdir))) { dir.create(file.path(resdir), showWarnings=FALSE, recursive=TRUE) }
   
   ## for a single expressionSet object
   
-  ## extract subtypes
-  ## for a single expressionSet object
   ## extract subtypes
   sbts <- getSubtype(eset=eset, method="class")
   if (sum(table(sbts) > 3) < 2) {
@@ -47,23 +56,21 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
   } else {
     sbts.proba <- getSubtype(eset=eset, method="fuzzy")  
   }
-  sbts.proba <- cbind("ALL"=1, sbts.proba)
+  sbts.proba <- cbind("Global"=1, sbts.proba)
   sbts.crisp <- getSubtype(eset=eset, method="crisp")
-  sbts.crisp <- cbind("ALL"=1, sbts.crisp)
+  sbts.crisp <- cbind("Global"=1, sbts.crisp)
   sbtu <- colnames(sbts.proba)
   
-  ## extract genes
-  gid <- paste("geneid", intersect(geneid, Biobase::fData(eset)[ , "ENTREZID"]), sep=".")
-  if (length(gid) == 0) {
-    stop("Genes not in the expressionSet object")
-  }
-  if (length(gid) < length(geneid)) {
-    warning(sprintf("%i/%i genes were present in the expressionSet object", length(gid), length(geneid)))
-  }
-  glabel <- Biobase::fData(eset)[gid, "SYMBOL"]
-  glabel[is.na(glabel)] <- paste("ENTREZID", Biobase::fData(eset)[gid, "ENTREZID"][is.na(glabel)], sep=".")
-  names(glabel) <- gid
-  expr <- Biobase::exprs(eset)[gid, , drop=FALSE]
+  ## build matrix of signature scores in parallel
+  splitix <- parallel::splitIndices(nx=length(sig), ncl=nthread)
+  splitix <- splitix[sapply(splitix, length) > 0]
+  mcres <- parallel::mclapply(splitix, function(x, sig, eset, ...) {
+    res <- sigScore(eset=eset, sig=sig[[x]], ...)
+    return (res)
+  }, sig=sig, eset=eset, ...)
+  expr <- t(do.call(cbind, mcres))
+  colnames(expr) <- names(sig)
+    
     
   ## compute subtype-specific pairwise correlation across query genes
   
@@ -106,7 +113,7 @@ function (eset, geneid, plot=TRUE, method=c("pearson", "spearman", "kendall"), w
     dd <- data.frame(x)
     dimnames(dd) <- list(glabel[rownames(x)], glabel[colnames(x)])
     return (dd)
-  }, glabel=glabel)
+  }, glabel=olnames(expr))
   if (condensed) {
     WriteXLS::WriteXLS(x="dd", ExcelFileName=file.path(resdir, sprintf("subtype_correlation_%s.xls", method)), AdjWidth=FALSE, BoldHeaderRow=FALSE, row.names=TRUE, col.names=TRUE, FreezeRow=1, FreezeCol=1)
   } else {
