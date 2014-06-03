@@ -72,7 +72,7 @@ function (eset, sig, method=c("principal.component", "weighted.average"), scalin
           ssn <- 0
         }
         sigcr <- sum(abs(sigp[ , "coefficient"]), na.rm=TRUE) / sum(abs(sig[ , "coefficient"]), na.rm=TRUE)
-        sigscore <- (sigcr * ssp - (1 - sigcr) ssn) / 2
+        sigscore <- (sigcr * ssp - (1 - sigcr) * ssn) / 2
       }
     )
   } else {
