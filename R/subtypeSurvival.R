@@ -96,9 +96,9 @@ function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resd
   } else {
     sbts.proba <- getSubtype(eset=eset, method="fuzzy")  
   }
-  sbts.proba <- cbind("ALL"=1, sbts.proba)
+  sbts.proba <- cbind("Global"=1, sbts.proba)
   sbts.crisp <- getSubtype(eset=eset, method="crisp")
-  sbts.crisp <- cbind("ALL"=1, sbts.crisp)
+  sbts.crisp <- cbind("Global"=1, sbts.crisp)
   sbtu <- colnames(sbts.proba)
   
   ## extract genomic data
@@ -133,6 +133,7 @@ function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resd
     }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
+  names(rr) <- names(sig)
   ## save results
   dd <- lapply(rr, data.frame)
   if (condensed) {
@@ -154,7 +155,7 @@ function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resd
   cindices <- rr
   
   ## D index (hazard ratio)
-  splitix <- parallel::splitIndices(nx=rownames(expr), ncl=nthread)
+  splitix <- parallel::splitIndices(nx=nrow(expr), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
   mcres <- parallel::mclapply(splitix, function(x, expr, stime, sevent, strat, sbts.proba) {
     ci <- lapply(rownames(expr)[x], function (x, expr, stime, sevent, strat, sbts.proba) {
@@ -165,6 +166,7 @@ function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resd
     }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   }, expr=expr, stime=stime, sevent=sevent, strat=strat, sbts.proba=sbts.proba)
   rr <- unlist(mcres, recursive=FALSE)
+  names(rr) <- names(sig)
   ## save results
   dd <- lapply(rr, data.frame)
   if (condensed) {
