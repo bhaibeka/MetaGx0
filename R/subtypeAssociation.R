@@ -1,4 +1,4 @@
-########################
+########################/
 ## Benjamin Haibe-Kains
 ## All rights Reserved
 ## September 1, 2013
@@ -98,13 +98,21 @@ function (eset, sig, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, res
   # names(pp) <- names(sig)
   
   if (plot) {
+    ## determine y-axis limits for all the boxplot
+    mylim <- range(lapply(pp, function (x, sbts) {
+      sbtsu <- sort(unique(sbts))
+      res <- range(sapply(sbtsu, function (s, sbts, x) {
+        return (range(boxplot.stats(x=x[!is.na(sbts) & sbts == s])$stats))
+      }, sbts=sbts, x=x$x))
+      return (res)
+    }, sbts=sbts))
     if (condensed) { pdf(file.path(resdir, "subtype_association_boxplot.pdf")) }
     lapply(pp, function (x, condensed, sbts, subtype.col, resdir) {
       if (!condensed) { pdf(file.path(resdir, sprintf("subtype_association_boxplot_%s.pdf", x$symbol))) }
       par(las=2, mar=c(5, 4, 4, 2) + 0.1, xaxt="n")
       # dd <- c(list(" "=NA), list("  "=NA), dd2)
-      mylim <- round(range(x$x, na.rm=TRUE))
-      mylim[abs(mylim) < 2] <- c(-2, 2)[abs(mylim) < 2]
+      # mylim <- round(range(x$x, na.rm=TRUE))
+      # mylim[abs(mylim) < 2] <- c(-2, 2)[abs(mylim) < 2]
       mp <- boxplot(x$x ~ sbts, las=3, outline=FALSE, ylim=mylim, main=sprintf("%s", x$name), col=subtype.col)
       axis(1, at=1:length(mp$names), tick=TRUE, labels=TRUE)
       text(x=1:length(mp$names), y=par("usr")[3] - (par("usr")[4] * 0.05), pos=2, labels=mp$names, srt=45, xpd=NA, font=2, col=c("black"))
