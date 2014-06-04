@@ -101,15 +101,17 @@ function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resd
   sbts.crisp <- cbind("Global"=1, sbts.crisp)
   sbtu <- colnames(sbts.proba)
   
-  ## extract genomic data
   ## build matrix of signature scores in parallel
   splitix <- parallel::splitIndices(nx=length(sig), ncl=nthread)
   splitix <- splitix[sapply(splitix, length) > 0]
   mcres <- parallel::mclapply(splitix, function(x, sig, eset, sigm, sigs) {
-    res <- sigScore(eset=eset, sig=sig[[x]], method=sigm, scaling=sigs)
+    res <- lapply(sig[x], function (x, eset, sigm, sigs) {
+      res <- sigScore(eset=eset, sig=x, method=sigm, scaling=sigs)
+      return (res)
+    }, eset=eset, sigm=sigm, sigs=sigs)
     return (res)
   }, sig=sig, eset=eset, sigm=sig.method, sigs=sig.scaling)
-  expr <- t(do.call(cbind, mcres))
+  expr <- t(do.call(cbind, do.call(c, mcres)))
   rownames(expr) <- names(sig)
   ## extract survival data
   stime <- Biobase::pData(eset)[ , "t.dfs"] / 365
