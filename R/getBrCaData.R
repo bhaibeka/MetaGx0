@@ -243,14 +243,16 @@ function (resdir="cache", probegene.method, remove.duplicates=TRUE, topvar.genes
   ## merged eset
   Biobase::pData(eset.merged) <- cbind(Biobase::pData(eset.merged), "duplicates"=NA)
   Biobase::pData(eset.merged)[names(tt), "duplicates"] <- tt
+  
   ## individual esets
-  eset.all <- lapply(eset.all, function (x, y) {
-    Biobase::pData(x) <- cbind(Biobase::pData(x), "duplicates"=NA)
-    nn <- intersect(rownames(pData(x)), y)
-    Biobase::pData(x)[nn, "duplicates"] <- y[nn]
-    return(x)
-  }, y=tt)
-
+  if (length(tt) > 0) {
+	  eset.all <- lapply(eset.all, function (x, y) {
+	    Biobase::pData(x) <- cbind(Biobase::pData(x), "duplicates"=NA)
+	    nn <- intersect(rownames(pData(x)), y)
+	    Biobase::pData(x)[nn, "duplicates"] <- y[nn]
+	    return(x)
+	  }, y=tt)
+  }
   ## remove duplicates
   if (remove.duplicates) {
     ## duplicates are removed by order of datasets

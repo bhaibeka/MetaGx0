@@ -6,7 +6,7 @@
 
 
 `subtypeSurvival` <- 
-function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resdir="cache", nthread=1, sig.method, sig.scaling) {
+function (eset, sig, plot=FALSE, weighted=FALSE, surv.type=c("dfs", "rfs", "dmfs", "tdm"), time.cens, condensed=TRUE, resdir="cache", nthread=1, sig.method, sig.scaling) {
 
   ######################
   
@@ -59,6 +59,8 @@ function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resd
   }
   
   ######################
+ 
+  surv.type <- match.arg(surv.type)
   
   if (class(eset) != "ExpressionSet") {
     stop("Handling list of expressionSet objects is not implemented yet")
@@ -114,9 +116,9 @@ function (eset, sig, plot=FALSE, weighted=FALSE, time.cens, condensed=TRUE, resd
   expr <- t(do.call(cbind, do.call(c, mcres)))
   rownames(expr) <- names(sig)
   ## extract survival data
-  stime <- Biobase::pData(eset)[ , "t.dfs"] / 365
+  stime <- Biobase::pData(eset)[ , sprintf("t.%s", surv.type)] / 365
   time.cens <- time.cens / 365
-  sevent <- Biobase::pData(eset)[ , "e.dfs"]
+  sevent <- Biobase::pData(eset)[ , sprintf("e.%s", surv.type)]
   ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=time.cens)  
   stime <- ss[[1]]
   sevent <- ss[[2]]
