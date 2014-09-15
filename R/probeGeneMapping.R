@@ -83,6 +83,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
       rownames(Biobase::fData(eset)) <- names(probes)
       Biobase::fData(eset)[ , "ENTREZID"] <- gid
       Biobase::fData(eset)[ , "SYMBOL"] <- gsymb
+      Biobase::fData(eset) <- cbind(Biobase::fData(eset), "PROBEID"=probes, stringsAsFactors=FALSE)
     },
     "variance" = {
       ## other platform, select the most variant probe per Entrez Gene ID
@@ -96,6 +97,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
       rownames(Biobase::exprs(eset)) <- names(probes)
       Biobase::fData(eset) <- Biobase::fData(eset)[probes, , drop=FALSE]
       rownames(Biobase::fData(eset)) <- names(probes)
+      Biobase::fData(eset) <- cbind(Biobase::fData(eset), "PROBEID"=probes, stringsAsFactors=FALSE)
       ## get the gene symbols from entrez gene id using org.Hs.eg.db
       gs <- toTable(org.Hs.egSYMBOL)
       gs <- gs[!duplicated(gs[ , "gene_id"]), , drop=FALSE]
