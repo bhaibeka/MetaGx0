@@ -77,21 +77,29 @@ function (eset, sig, plot=TRUE, subtype.col, weighted=FALSE, condensed=TRUE, res
   mcres <- parallel::mclapply(splitix, function(x, sig, eset, sbts, sbtu, ...) {    
     pp <- lapply(sig[x], function (x, eset, sbts, sbtu, ...) {
       xx <- sigScore(eset=eset, sig=x, ...)
-      ## kruskal-wallis test
-      kt <- kruskal.test(x=xx, g=sbts)$p.value
-      ## pairwise wilcoxon test
-      wt <- matrix(NA, nrow=length(sbtu), ncol=length(sbtu), dimnames=list(sbtu, sbtu))
-      wt1 <- pairwise.wilcox.test(x=xx, g=sbts, p.adjust.method="none", paired=FALSE, alternative="greater")$p.value
-      wt2 <- pairwise.wilcox.test(x=xx, g=sbts, p.adjust.method="none", paired=FALSE, alternative="less")$p.value
-      nix <- !is.na(wt1)
-      wt[rownames(wt1), colnames(wt1)][nix] <- wt1[nix]
-      nix <- !is.na(t(wt2))
-      wt[colnames(wt2), rownames(wt2)][nix] <- t(wt2)[nix]
-      diag(wt) <- 1
-      return (list("kruskal.pvalue"=kt, "wilcoxon.pvalue"=wt, "x"=xx))
+      ccix <- complete.cases(xx, sbts)
+      if (length(unique(sbts[ccix])) < 2) {
+        res <- NULL
+      } else {
+        ## kruskal-wallis test
+        kt <- kruskal.test(x=xx, g=sbts)$p.value
+        ## pairwise wilcoxon test
+        wt <- matrix(NA, nrow=length(sbtu), ncol=length(sbtu), dimnames=list(sbtu, sbtu))
+        wt1 <- pairwise.wilcox.test(x=xx, g=sbts, p.adjust.method="none", paired=FALSE, alternative="greater")$p.value
+        wt2 <- pairwise.wilcox.test(x=xx, g=sbts, p.adjust.method="none", paired=FALSE, alternative="less")$p.value
+        nix <- !is.na(wt1)
+        wt[rownames(wt1), colnames(wt1)][nix] <- wt1[nix]
+        nix <- !is.na(t(wt2))
+        wt[colnames(wt2), rownames(wt2)][nix] <- t(wt2)[nix]
+        diag(wt) <- 1
+        res <- list("kruskal.pvalue"=kt, "wilcoxon.pvalue"=wt, "x"=xx)
+      }
+      return (res)
     }, eset=eset, sbts=sbts, sbtu=sbtu, ...)
+    return (pp)
   }, sig=sig, eset=eset, sbts=sbts, sbtu=sbtu, ...)
   pp <- do.call(c, mcres)
+  pp <- pp[!sapply(pp, is.null)]
   for (i in 1:length(pp)) {
     pp[[i]]$name <- names(pp)[i]
   }
