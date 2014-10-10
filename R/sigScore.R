@@ -76,7 +76,7 @@ function (eset, sig, method=c("principal.component", "weighted.average"), scalin
       }
     )
   } else {
-    sigscore <- Biobase::exprs(eset)[ , which(is.element(rownames(Biobase::fData(eset)), sig[1, 1]))[1]] * sig[1, 2]
+    sigscore <- Biobase::exprs(eset)[which(is.element(rownames(Biobase::fData(eset)), sig[1, 1]))[1], ] * sig[1, 2]
   }
   ## scaling
   switch(scaling,

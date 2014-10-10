@@ -6,7 +6,7 @@
 
 
 `probeGeneMapping` <- 
-function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL570", "GPL1352"), method=c("variance", "jetset")){
+function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL570", "GPL571", "GPL1352"), method=c("variance", "jetset")){
   ## probe-gene mapping: which package to use for which platform
   #
   # Args:
@@ -27,6 +27,7 @@ function (eset, platform=c("MISC", "GPL8300", "GPL96", "GPL3921", "GPL97", "GPL5
     c("GPL3921", "jetset", "hgu133a"),
     c("GPL97", "jetset", "hgu133plus2"),
     c("GPL570", "jetset", "hgu133plus2"),
+    c("GPL571", "jetset", "hgu133a"),
     c("GPL1352", "jetset", "u133x3p"))
   dimnames(platf.map) <- list(platf.map[ , 1], c("platform", "method", "parameters"))
   if (!is.element(method, platf.map[platf.map[ , "platform"], "method"])) {
