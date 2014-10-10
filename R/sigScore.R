@@ -28,7 +28,9 @@ function (eset, sig, method=c("principal.component", "weighted.average"), scalin
   }
   sig <- sig[intersect(sig[ , "feature"], rownames(Biobase::fData(eset))), , drop=FALSE]
   if (nrow(sig) == 0) {
-    stop ("Feature identifers from the signature do not map with those of the expressionSet object")
+    warning ("Feature identifers from the signature do not map with those of the expressionSet object")
+    sigscore <- array(NA, dim=nrow(Biobase::pData(eset)), dimnames=list(rownames(Biobase::pData(eset))))
+    return (sigscore)
   }
   if (nrow(sig) < signn) {
     warning(sprintf("%i/%i genes were present in the expressionSet object", nrow(sig), signn))

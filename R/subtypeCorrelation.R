@@ -125,9 +125,9 @@ function (eset, sig, method=c("pearson", "spearman", "kendall"), weighted=FALSE,
         text(x=seq(par("usr")[1] + par("usr")[2] * 0.075, par("usr")[2] - par("usr")[2] * 0.025, length.out=nrow(xx)), y=par("usr")[3] - (par("usr")[4] * 0.025), pos=2, labels=rownames(xx), srt=45, xpd=NA, cex=0.8, font=2)
         text(x=par("usr")[1], y=seq(par("usr")[3] + par("usr")[4] * 0.05, par("usr")[4] - par("usr")[4] * 0.05, length.out=nrow(xx)), pos=2, labels=rownames(xx), srt=0, xpd=NA, cex=0.8, font=2)
         if (names(rr)[i] == "Global") {
-          ss <- sprintf("Co-expression for %s population", names(rr)[i])
+          ss <- sprintf("Co-expression in %s population", names(rr)[i])
         } else {
-          ss <- sprintf("Co-expression for %s subtype", names(rr)[i])
+          ss <- sprintf("Co-expression in %s subtype", names(rr)[i])
         }
         title(main=ss)
       }
