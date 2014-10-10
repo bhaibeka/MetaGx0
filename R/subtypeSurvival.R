@@ -11,50 +11,65 @@ function (eset, sig, plot=FALSE, weighted=FALSE, surv.type=c("dfs", "rfs", "dmfs
   ######################
   
   concIndex <- function (x, stime, sevent, strat, weights, tau, alpha=0.05, alternative=c("two.sided", "less", "greater")) {
-    if (missing(tau)) {
-      tau <- max(stime, na.rm=TRUE)
-    } else {
-      ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=tau)  
-      stime <- ss[[1]]
-      sevent <- ss[[2]]
-    }
     if (missing(strat)) { strat <- array(1, dim=length(stime), dimnames=list(names(stime))) }
-    if (length(stime) != length(sevent) || length(stime) != length(strat) || length(stime) != length(x)) { stop("stime, sevent, strat and x must have the same length") }
-    # rr <-  mRMRe::correlate(X=x, Y=Surv(stime, sevent), method="cindex", strata=strat, weights=weights)
-    dd <- data.frame("stime"=stime, "sevent"=sevent, "x"=x, "weights"=weights, "strat"=strat, stringsAsFactors=FALSE)
-    ## weights should be > 0
-    dd <- dd[!is.na(dd$weights) & dd$weights > 0, , drop=FALSE]
-    rr <- summary(survival::coxph(Surv(stime, sevent) ~ strata(strat) + x, data=dd, weights=dd$weights))
-    cindex <- abs(rr$concordance[1] - 0.5)
-    if (rr$coefficients["x", 1] < 0) { cindex <- - cindex }
-    cindex <- 0.5 + cindex
-    se <- rr$concordance[2]
-    ci <- qnorm(p=alpha / 2, lower.tail=FALSE) * se
-    lower <- cindex - ci
-    upper <- cindex + ci
-    switch(alternative, 
-      "two.sided"={ p <- pnorm((cindex - 0.5) / se, lower.tail=cindex < 0.5) * 2 }, 
-      "less"={ p <- pnorm((cindex - 0.5) / se, lower.tail=TRUE) }, 
-      "greater"={  p <- pnorm((cindex - 0.5) / se, lower.tail=FALSE) }
-    )
-    rr <- c(list(2 * (cindex - 0.5)), cindex, se, lower, upper, p)
-    names(rr) <- c("Dxy", "cindex", "se", "lower", "upper", "p.value")
+    if (missing(weights)) { weights <- array(1, dim=length(stime), dimnames=list(names(stime))) }
+    resnn <- c("Dxy", "cindex", "se", "lower", "upper", "p.value")
+    ccix <- complete.cases(x, stime, sevent, strat, weights)
+    if (sum(ccix) < 3) {
+      rr <- as.list(array(NA, dim=length(resnn), dimnames=list(resnn)))
+    } else {      
+      if (missing(tau)) {
+        tau <- max(stime, na.rm=TRUE)
+      } else {
+        ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=tau)  
+        stime <- ss[[1]]
+        sevent <- ss[[2]]
+      }
+      if (missing(strat)) { strat <- array(1, dim=length(stime), dimnames=list(names(stime))) }
+      if (length(stime) != length(sevent) || length(stime) != length(strat) || length(stime) != length(x)) { stop("stime, sevent, strat and x must have the same length") }
+      # rr <-  mRMRe::correlate(X=x, Y=Surv(stime, sevent), method="cindex", strata=strat, weights=weights)
+      dd <- data.frame("stime"=stime, "sevent"=sevent, "x"=x, "weights"=weights, "strat"=strat, stringsAsFactors=FALSE)
+      ## weights should be > 0
+      dd <- dd[!is.na(dd$weights) & dd$weights > 0, , drop=FALSE]
+      rr <- summary(survival::coxph(Surv(stime, sevent) ~ strata(strat) + x, data=dd, weights=dd$weights))
+      cindex <- abs(rr$concordance[1] - 0.5)
+      if (rr$coefficients["x", 1] < 0) { cindex <- - cindex }
+      cindex <- 0.5 + cindex
+      se <- rr$concordance[2]
+      ci <- qnorm(p=alpha / 2, lower.tail=FALSE) * se
+      lower <- cindex - ci
+      upper <- cindex + ci
+      switch(alternative, 
+        "two.sided"={ p <- pnorm((cindex - 0.5) / se, lower.tail=cindex < 0.5) * 2 }, 
+        "less"={ p <- pnorm((cindex - 0.5) / se, lower.tail=TRUE) }, 
+        "greater"={  p <- pnorm((cindex - 0.5) / se, lower.tail=FALSE) }
+      )
+      rr <- c(list(2 * (cindex - 0.5)), cindex, se, lower, upper, p)
+      names(rr) <- resnn
+    }
     return (rr)
   }
   
   dIndex <- function (x, stime, sevent, strat, weights, tau, alternative=c("two.sided", "less", "greater")) {
-    if (missing(tau)) {
-      tau <- max(stime, na.rm=TRUE)
-    } else {
-      ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=tau)  
-      stime <- ss[[1]]
-      sevent <- ss[[2]]
-    }
     if (missing(strat)) { strat <- array(1, dim=length(stime), dimnames=list(names(stime))) }
-    if (length(stime) != length(sevent) || length(stime) != length(strat) || length(stime) != length(x)) { stop("stime, sevent, strat and x must have the same length") }
-    rr <-  survcomp::D.index(x=x, surv.time=stime, surv.event=sevent, strat=strat, weights=weights, method.test="logrank", na.rm=TRUE)
-    rr <- rr[c("d.index", "coef", "se", "lower", "upper", "p.value")]
-    names(rr) <- c("Dindex", "coef", "se", "lower", "upper", "p.value")
+    if (missing(weights)) { weights <- array(1, dim=length(stime), dimnames=list(names(stime))) }
+    resnn <- c("Dindex", "coef", "se", "lower", "upper", "p.value")
+    ccix <- complete.cases(x, stime, sevent, strat, weights)
+    if (sum(ccix) < 3) {
+      rr <- as.list(array(NA, dim=length(resnn), dimnames=list(resnn)))
+    } else {      
+      if (missing(tau)) {
+        tau <- max(stime, na.rm=TRUE)
+      } else {
+        ss <- survcomp::censor.time(surv.time=stime, surv.event=sevent, time.cens=tau)  
+        stime <- ss[[1]]
+        sevent <- ss[[2]]
+      }
+      if (length(stime) != length(sevent) || length(stime) != length(strat) || length(stime) != length(x)) { stop("stime, sevent, strat and x must have the same length") }
+      rr <-  survcomp::D.index(x=x, surv.time=stime, surv.event=sevent, strat=strat, weights=weights, method.test="logrank", na.rm=TRUE)
+      rr <- rr[c("d.index", "coef", "se", "lower", "upper", "p.value")]
+      names(rr) <- resnn
+    }
     return (rr)
   }
   
