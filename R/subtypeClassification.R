@@ -6,7 +6,7 @@
 
 
 `subtypeClassification` <- 
-function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2003")) {
+function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2003", "intClust")) {
   # Classify GSE subtype and give out the probability of being that subtype
   #
   # Args:
@@ -29,7 +29,7 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
   sbtn2.ssp <- c("Basal", "Her2", "Lums", "LumB", "LumA", "Normal")
   
   datage <- t(Biobase::exprs(eset))   
-  annotge <- cbind("probe"=rownames(Biobase::fData(eset)), "EntrezGene.ID"=stripWhiteSpace(as.character(Biobase::fData(eset)[ , "ENTREZID"])))
+  annotge <- cbind("probe"=rownames(Biobase::fData(eset)), "EntrezGene.ID"=stripWhiteSpace(as.character(Biobase::fData(eset)[ , "ENTREZID"])), "SYMBOL"=Biobase::fData(eset)[ , "SYMBOL"])
   rownames(annotge) <- stripWhiteSpace(as.character(annotge[ , "probe"]))
   
   ## SCM family
@@ -106,8 +106,46 @@ function (eset, model=c("scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2
     names(sbts$subtype) <- rownames(sbts$subtype.proba) <- rownames(sbts$subtype.crisp)<- rownames(datage)
   }
   
+  ## IntClust family
+  if (model %in% c("intClust")) {
+    
+    myx <- !is.na(annotge[ , "SYMBOL"]) & !duplicated(annotge[ , "SYMBOL"])
+    dd <- t(datage[ , myx, drop=FALSE])
+    rownames(dd) <- annotge[myx, "SYMBOL"]
+    ## remove patients with more than 80% missing values
+    rix <- apply(dd, 2, function (x, y) { return ((sum(is.na(x) / length(x))) > y) }, y=0.8)
+    cix <- apply(dd, 2, function (x, y) { return ((sum(is.na(x) / length(x))) > y) }, y=0.8)
+    dd <- dd[!rix, !cix, drop=FALSE]
+    features <- iC10::matchFeatures(Exp=dd, Exp.by.feat="gene")
+    features <- iC10::normalizeFeatures(features, method="scale")
+    res <- iC10::iC10(features)
+    ## compute crisp classification
+    crisp <- t(apply(res$posterior, 1, function (x) {
+      xx <- array(0, dim=length(x), dimnames=list(names(x)))
+      xx[which.max(x)] <- 1
+      return (xx)
+    }))
+    sbts$subtype <- array(NA, dim=nrow(datage), dimnames=list(rownames(datage)))
+    sbts$subtype[!rix] <- res$class
+    sbts$subtype.proba <- array(NA, dim=c(nrow(datage), ncol(res$posterior)), dimnames=list(rownames(datage), colnames(res$posterior)))
+    sbts$subtype.proba[!rix, ] <- res$posterior
+    sbts$subtype.crisp <- t(apply(sbts$subtype.proba, 1, function (x) {
+      xx <- array(0, dim=length(x), dimnames=list(names(x)))
+      xx[which.max(x)] <- 1
+      return (xx)
+    }))
+    ## set the proper colnames
+    colnames(sbts$subtype.proba) <- colnames(sbts$subtype.crisp) <- paste("iC", colnames(sbts$subtype.proba), sep="")
+    sbts$subtype <- paste("iC", sbts$subtype, sep="")
+    sbts$subtype <- factor(sbts$subtype, levels=colnames(sbts$subtype.proba))
+    ## set the proper rownames
+    names(sbts$subtype) <- rownames(sbts$subtype.proba) <- rownames(sbts$subtype.crisp)<- rownames(datage)
+  }
+  
   ## merge clinical information and subtype classification
   eset <- setSubtype(eset=eset, subtype.class=sbts$subtype, subtype.crisp=sbts$subtype.crisp, subtype.fuzzy=sbts$subtype.proba)
   return (eset)
 }
 
+
+## end
